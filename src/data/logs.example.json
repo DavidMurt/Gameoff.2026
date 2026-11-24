@@ -1,0 +1,29 @@
+[
+    {
+        "id": "1",
+        "note": "Placeholder log. The real story data is not in git (see AGENTS.md).",
+        "batch": 1,
+        "room": "1001",
+        "timestamp": 240,
+        "duration": 15,
+        "entries": [
+            { "offset": 0, "badgeId": "1111", "text": "This is placeholder dialogue." },
+            { "offset": 2, "badgeId": "2222", "text": "The real logs live only on the writer's machine." },
+            { "offset": 5, "text": "[DOOR CLOSES]" },
+            { "offset": 9, "badgeId": "1111", "text": "See you in Room B." }
+        ]
+    },
+    {
+        "id": "2",
+        "note": "Placeholder log.",
+        "batch": 1,
+        "room": "1004",
+        "timestamp": 270,
+        "duration": 15,
+        "entries": [
+            { "offset": 0, "text": "[HUMMING]" },
+            { "offset": 3, "badgeId": "3333", "text": "Nobody can see me on the map." },
+            { "offset": 6, "badgeId": "2222", "text": "I can still hear you, though." }
+        ]
+    }
+]

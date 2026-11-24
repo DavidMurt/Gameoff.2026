@@ -12,7 +12,7 @@ Guidance for AI coding agents working in this repository (GitHub Game Off 2026 e
 ## Commands
 
 ```bash
-yarn install     # install dependencies
+yarn install     # install dependencies (also copies placeholder story data into place, see "Spoilers")
 yarn dev         # start Vite dev server at http://localhost:5500
 yarn build       # production build to dist/ (with sourcemaps)
 yarn preview     # serve the production build
@@ -31,12 +31,16 @@ src/
   component/       # Reusable GameObjects / Containers (panels, Button, TextField, Theme...)
   data/            # Story data types and content (SampleData.ts is placeholder). All edited with the log editor:
                    # logs.json (logs), batches.json (batch hours), rooms.json (rooms and corridors), badges.json
-                   # (characters and their moves; Movement.ts turns moves into proximity data)
+                   # (characters and their moves; Movement.ts turns moves into proximity data). These four are
+                   # NOT in git (spoilers); *.example.json are the committed placeholders
   state/           # GameState (time, placements, locks, batches, save), Clock helpers and EditorState, Settings (player prefs)
 assets/            # Images and fonts, loaded by relative path 'assets/...'
   fonts/           # .ttf fonts and bitmap fonts (.png + .xml pairs)
 docs/              # Design references (not loaded by the game)
   gui-mockup.webp  # Main game screen GUI mockup
+  IDEAS.md, story.md, characters.md  # Design, story and cast notes: NOT in git (spoilers), may be missing
+scripts/
+  setup-data.mjs   # Copies src/data/*.example.json to the real data files when they're missing (runs on yarn install)
 ```
 
 New scenes go in `src/scenes/`, new reusable game objects in `src/component/`.
@@ -96,6 +100,7 @@ Follow the style already in the codebase:
 
 - Run `npx tsc --noEmit` (and `yarn build` for larger changes) before reporting work as done.
 - Don't commit `node_modules/`, `dist/`, `.vite/` or `.vscode/` (see `.gitignore`).
+- **Spoilers:** the repo is public, so the story stays out of git. `src/data/logs.json`, `batches.json`, `badges.json`, `rooms.json` and `docs/IDEAS.md`, `story.md`, `characters.md` are ignored and exist only on the writer's machine. Never force-add them (`git add -f`) or copy story content into committed files (code comments, commit messages, PR descriptions, `*.example.json`). In a fresh clone or worktree the data files are spoiler-free placeholders (`yarn setup-data` creates them if missing) and the docs don't exist; that's expected.
 - Don't upgrade Phaser or Vite unless asked. This project uses Phaser 4, whose APIs differ from Phaser 3 — check the Phaser 4 docs/typings (`node_modules/phaser/types`) rather than relying on Phaser 3 examples.
 - Keep changes small and in the style above; there's no linter or formatter configured, so match surrounding code by hand.
 
