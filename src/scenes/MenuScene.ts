@@ -88,7 +88,7 @@ export class MenuScene extends Phaser.Scene {
             '· Mouse wheel moves system time (set the step in Settings). Every panel follows it.',
             '· Click and hold on a timeline to drag system time.',
             '· Left click a room for viewer 1, right click for viewer 2.',
-            '· ⇄ ALL ROOMS: drag logs out of UNPLACED into a room, on the 15-minute grid.',
+            '· Logs tab: drag logs out of UNPLACED into a room, on the 15-minute grid.',
             '· Lock the room and the time in a viewer. Both locked = the log is verified.',
             '· Fill in names, roles and room descriptions as you work them out.',
             '· When every log in the batch is correct, submit it. Its hash decrypts the next batch.'

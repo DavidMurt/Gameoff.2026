@@ -12,10 +12,12 @@ interface SaveData {
     badgeRoles: Record<string, string>;
     roomNotes: Record<string, string>;
     viewers: ViewerTarget[];
-    leftPanel: 'map' | 'rooms';
+    bottomTab?: BottomTab;
     activeRoom?: string | null;
     activeLog?: string | null;
 }
+
+export type BottomTab = 'users' | 'rooms' | 'logs';
 
 export interface SubmitResult {
     accepted: boolean;
@@ -40,7 +42,7 @@ export class GameState extends Phaser.Events.EventEmitter {
     badgeRoles: Record<string, string> = {};
     roomNotes: Record<string, string> = {};
     viewers: ViewerTarget[] = [null, null];
-    leftPanel: 'map' | 'rooms' = 'map';
+    bottomTab: BottomTab = 'users';
     checking = new Set<string>();
     // The last room the player selected, and the log the arrow keys move: the log clicked on a timeline,
     // or, once system time moves, the log in the active room at system time.
@@ -81,7 +83,7 @@ export class GameState extends Phaser.Events.EventEmitter {
             state.badgeRoles = data.badgeRoles;
             state.roomNotes = data.roomNotes;
             state.viewers = data.viewers;
-            state.leftPanel = data.leftPanel;
+            state.bottomTab = data.bottomTab ?? 'users';
             state.activeRoom = data.activeRoom ?? null;
             state.activeLog = data.activeLog ?? null;
             // A check that was running when the game was saved is run again.
@@ -109,7 +111,7 @@ export class GameState extends Phaser.Events.EventEmitter {
             badgeRoles: this.badgeRoles,
             roomNotes: this.roomNotes,
             viewers: this.viewers,
-            leftPanel: this.leftPanel,
+            bottomTab: this.bottomTab,
             activeRoom: this.activeRoom,
             activeLog: this.activeLog
         };
@@ -476,8 +478,9 @@ export class GameState extends Phaser.Events.EventEmitter {
         return this.logAt(v.id, this.systemTime);
     }
 
-    setLeftPanel(panel: 'map' | 'rooms') {
-        this.leftPanel = panel;
+    // Which tab the bottom-left panel shows: Users (badge log), Rooms (room registry) or Logs (room timelines).
+    setBottomTab(tab: BottomTab) {
+        this.bottomTab = tab;
         this.changed("panelChanged");
     }
 

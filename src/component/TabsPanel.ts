@@ -1,14 +1,13 @@
 import { SampleData } from "../data/SampleData";
 import { SensorState } from "../data/Types";
-import { GameState } from "../state/GameState";
+import { BottomTab, GameState } from "../state/GameState";
 import { Button } from "./Button";
 import { Glass } from "./Glass";
 import { TextField } from "./TextField";
 import { Theme } from "./Theme";
 
-type Tab = 'users' | 'rooms' | 'symbols';
-
-// Users (badge log), Rooms (room registry) and Symbols (reserved) tabs under the map.
+// Users (badge log), Rooms (room registry) and Logs tabs under the map. The Logs tab's content is the
+// RoomTimelinePanel, which GameScene places over this panel's content area; it shows itself when the tab is chosen.
 export class TabsPanel extends Phaser.GameObjects.Container {
     static readonly rowH = 34;
     static readonly listTop = 104;
@@ -16,9 +15,8 @@ export class TabsPanel extends Phaser.GameObjects.Container {
     gs: GameState;
     w: number;
     h: number;
-    tab: Tab = 'users';
     page = 0;
-    tabButtons: Record<Tab, Button>;
+    tabButtons: Record<BottomTab, Button>;
     content: Phaser.GameObjects.GameObject[] = [];
     prevButton: Button;
     nextButton: Button;
@@ -44,25 +42,23 @@ export class TabsPanel extends Phaser.GameObjects.Container {
         this.tabButtons = {
             users: new Button(this.scene, 0, 0, 170, 54, 'Users', () => this.setTab('users'), 22),
             rooms: new Button(this.scene, 170, 0, 170, 54, 'Rooms', () => this.setTab('rooms'), 22),
-            symbols: new Button(this.scene, 340, 0, 170, 54, 'Symbols', () => this.setTab('symbols'), 22)
+            logs: new Button(this.scene, 340, 0, 170, 54, 'Logs', () => this.setTab('logs'), 22)
         };
         this.prevButton = new Button(this.scene, this.w - 150, this.h - 48, 40, 36, '◀', () => this.setPage(this.page - 1));
         this.nextButton = new Button(this.scene, this.w - 56, this.h - 48, 40, 36, '▶', () => this.setPage(this.page + 1));
         this.pageText = this.scene.add.text(this.w - 83, this.h - 30, '', Theme.style(15, Theme.textDim)).setOrigin(0.5);
-        this.add([frame, this.tabButtons.users, this.tabButtons.rooms, this.tabButtons.symbols,
+        this.add([frame, this.tabButtons.users, this.tabButtons.rooms, this.tabButtons.logs,
             this.prevButton, this.nextButton, this.pageText]);
         this.scene.add.existing(this);
 
         this.gs.on("batchChanged", () => this.rebuild());
-        this.gs.on("panelChanged", () => this.setVisible(this.gs.leftPanel === 'map'));
-        this.setVisible(this.gs.leftPanel === 'map');
+        this.gs.on("panelChanged", () => this.rebuild());
         this.rebuild();
     }
 
-    setTab(tab: Tab) {
-        this.tab = tab;
+    setTab(tab: BottomTab) {
         this.page = 0;
-        this.rebuild();
+        this.gs.setBottomTab(tab);
     }
 
     setPage(page: number) {
@@ -83,15 +79,13 @@ export class TabsPanel extends Phaser.GameObjects.Container {
     rebuild() {
         this.content.forEach((o) => o.destroy());
         this.content = [];
-        (Object.keys(this.tabButtons) as Tab[]).forEach((t) => this.tabButtons[t].setToggled(t === this.tab));
+        (Object.keys(this.tabButtons) as BottomTab[]).forEach((t) => this.tabButtons[t].setToggled(t === this.gs.bottomTab));
 
         let total = 0;
-        if (this.tab === 'users') {
+        if (this.gs.bottomTab === 'users') {
             total = this.buildUsers();
-        } else if (this.tab === 'rooms') {
+        } else if (this.gs.bottomTab === 'rooms') {
             total = this.buildRooms();
-        } else {
-            this.text(20, 80, 'Reserved.', Theme.textDim);
         }
         const pages = Math.max(1, Math.ceil(total / this.rowsPerPage));
         this.page = Phaser.Math.Clamp(this.page, 0, pages - 1);

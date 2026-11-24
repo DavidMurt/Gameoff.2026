@@ -41,13 +41,16 @@ export class GameScene extends Phaser.Scene {
         const timelineW = this.cameras.main.width - margin - timelineX;
         const barH = 56;
         const leftTop = margin + barH + 8;
-        const mapH = 536;
+        const mapH = 456;
 
-        const swap = () => this.gs.setLeftPanel(this.gs.leftPanel === 'map' ? 'rooms' : 'map');
         new BatchBar(this, margin, margin, leftW, barH, this.gs, () => this.toMenu());
-        new MapPanel(this, margin, leftTop, leftW, mapH, this.gs, swap);
-        new TabsPanel(this, margin, leftTop + mapH + 12, leftW, this.cameras.main.height - margin - (leftTop + mapH + 12), this.gs);
-        new RoomTimelinePanel(this, margin, leftTop, leftW, this.cameras.main.height - margin - leftTop, this.gs, swap);
+        new MapPanel(this, margin, leftTop, leftW, mapH, this.gs);
+        // The bottom-left tab panel; its Logs tab shows the room timelines in the area below the tab row.
+        const tabsY = leftTop + mapH + 12;
+        const tabsH = this.cameras.main.height - margin - tabsY;
+        const tabRowH = 54;
+        new TabsPanel(this, margin, tabsY, leftW, tabsH, this.gs);
+        new RoomTimelinePanel(this, margin, tabsY + tabRowH, leftW, tabsH - tabRowH, this.gs);
         new ViewerPanel(this, viewer1X, margin, viewerW, height, this.gs, 0);
         new ViewerPanel(this, viewer2X, margin, viewerW, height, this.gs, 1);
         new TimelinePanel(this, timelineX, margin, timelineW, height, this.gs);

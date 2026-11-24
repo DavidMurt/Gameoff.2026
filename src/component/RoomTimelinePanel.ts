@@ -20,15 +20,16 @@ interface DragInfo {
     right: boolean;
 }
 
-// "ALL ROOMS": the unplaced column plus one timeline column per audio room. Logs are dragged here.
+// The Logs tab of the bottom-left panel: the unplaced column plus one timeline column per audio room.
+// Logs are dragged here. It sits in the tab panel's content area, which draws the frame and the tab buttons.
 export class RoomTimelinePanel extends Phaser.GameObjects.Container {
-    static readonly colTop = 110;
+    static readonly colTop = 56;
     static readonly unplacedX = 66;
     static readonly unplacedW = 100;
     static readonly roomsX = 180;
     static readonly colW = 74;
     static readonly stride = 86;
-    static readonly cardH = 64;
+    static readonly cardH = 52;
 
     gs: GameState;
     w: number;
@@ -45,29 +46,24 @@ export class RoomTimelinePanel extends Phaser.GameObjects.Container {
     pendingRebuild = false;
     scrubbing = false;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, state: GameState,
-        onSwap: () => void) {
+    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, state: GameState) {
         super(scene, x, y);
         this.gs = state;
         this.w = w;
         this.h = h;
-        this.colH = h - RoomTimelinePanel.colTop - 50;
+        this.colH = h - RoomTimelinePanel.colTop - 30;
         this.visibleCount = Math.floor((w - 12 - RoomTimelinePanel.roomsX) / RoomTimelinePanel.stride);
-        this.create(onSwap);
+        this.create();
     }
 
-    create(onSwap: () => void) {
-        const frame = this.scene.add.graphics();
-        Glass.panel(frame, 0, 0, this.w, this.h);
-        const title = Theme.glowText(this.scene.add.text(16, 12, 'ALL ROOMS', Theme.titleStyle(22)));
-        this.leftButton = new Button(this.scene, this.w - 300, 12, 40, 40, '◀', () => this.scroll(-1), 18);
-        this.rightButton = new Button(this.scene, this.w - 252, 12, 40, 40, '▶', () => this.scroll(1), 18);
-        const swap = new Button(this.scene, this.w - 200, 12, 186, 40, '⇄ MAP', onSwap, 18);
-        const hint = this.scene.add.text(16, this.h - 38,
-            'grid = 15 min · solid = both locked · dashed = not fully locked · drag logs between rooms and times\n' +
-            'left click: viewer 1 · right click: viewer 2 · hour labels: move in time · up/down: move active log',
+    create() {
+        // The room scroll buttons sit in the tab row, to the right of the tab buttons.
+        this.leftButton = new Button(this.scene, this.w - 104, -46, 40, 38, '◀', () => this.scroll(-1), 18);
+        this.rightButton = new Button(this.scene, this.w - 56, -46, 40, 38, '▶', () => this.scroll(1), 18);
+        const hint = this.scene.add.text(16, this.h - 22,
+            'drag logs between rooms and times · solid = both locked · click/right click: viewer 1/2 · up/down: move active log',
             Theme.style(13, Theme.textDim));
-        this.add([frame, title, this.leftButton, this.rightButton, swap, hint]);
+        this.add([this.leftButton, this.rightButton, hint]);
         this.scene.add.existing(this);
 
         this.timeG = this.scene.add.graphics().setDepth(400);
@@ -94,7 +90,7 @@ export class RoomTimelinePanel extends Phaser.GameObjects.Container {
     }
 
     get shown(): boolean {
-        return this.gs.leftPanel === 'rooms';
+        return this.gs.bottomTab === 'logs';
     }
 
     // Absolute screen coordinates of the column area.
