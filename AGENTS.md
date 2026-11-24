@@ -29,8 +29,9 @@ src/
   PhaserGlobal.ts  # Exposes the global `Phaser` (the ESM build doesn't); imported first by main.ts
   scenes/          # One Phaser.Scene subclass per file (Menu, Game, End, Preload)
   component/       # Reusable GameObjects / Containers (panels, Button, TextField, Theme...)
-  data/            # Story data types and content (SampleData.ts is placeholder)
-  state/           # GameState (time, placements, locks, batches, save) and Clock helpers
+  data/            # Story data types and content (SampleData.ts is placeholder; logs.json and
+                   # badges.json hold the logs and writer badge names, edited with the log editor)
+  state/           # GameState (time, placements, locks, batches, save), Clock helpers and EditorState
 assets/            # Images and fonts, loaded by relative path 'assets/...'
   fonts/           # .ttf fonts and bitmap fonts (.png + .xml pairs)
 docs/              # Design references (not loaded by the game)
@@ -56,6 +57,7 @@ New scenes go in `src/scenes/`, new reusable game objects in `src/component/`.
   - `Boot` (in `main.ts`) loads only what the preloader itself needs (`DG` logo, `pixel` bitmap font), then registers the other scenes with `this.scene.add(key, Class)` and starts `PreloadScene`.
   - `PreloadScene` shows the logo/loading bar, queues all game assets in `preload()`, and starts `MenuScene` from the loader's `complete` event.
   - When adding a scene, register it in `Boot.create()` the same way.
+- **Log editor (dev only):** `yarn dev` then open `localhost:5500/?editor`. `PreloadScene` starts `LogEditorScene` instead of `MenuScene` when `import.meta.env.DEV` and the `editor` URL flag are set. It edits `src/data/logs.json` and saves it through a dev-only Vite middleware (`POST /__editor/save` in `vite.config.ts`). Edit logs there rather than by hand, so overlaps and other problems are checked.
 - Text is drawn with the `pixel` bitmap font (`this.add.bitmapText(x, y, 'pixel', text)`); `munro` is also loaded as a web font.
 
 ## Coding conventions
@@ -87,3 +89,25 @@ Follow the style already in the codebase:
 - Don't commit `node_modules/`, `dist/`, `.vite/` or `.vscode/` (see `.gitignore`).
 - Don't upgrade Phaser or Vite unless asked. This project uses Phaser 4, whose APIs differ from Phaser 3 — check the Phaser 4 docs/typings (`node_modules/phaser/types`) rather than relying on Phaser 3 examples.
 - Keep changes small and in the style above; there's no linter or formatter configured, so match surrounding code by hand.
+
+## Git workflow
+
+Each agent works on its own branch and finishes with a pull request. Never commit directly to `main`.
+
+1. **Branch:** start from an up-to-date `main` and create a new branch for the task:
+   ```bash
+   git switch main
+   git pull
+   git switch -c <short-kebab-case-name>   # e.g. data-overlap-checker
+   ```
+   One branch per task. Don't reuse another agent's branch or work on top of someone else's uncommitted changes. If the working tree is dirty when you start, stop and ask instead of stashing, discarding or committing those changes.
+2. **Work:** make the changes on that branch only. Before committing, run `npx tsc --noEmit`, plus `yarn build` for larger changes.
+3. **Commit:** stage only the files you changed (`git add <paths>`, not `git add -A`). Write a short, imperative, sentence-case commit message, e.g. `Add data checker for overlapping logs per room`. Split unrelated changes into separate commits.
+4. **Push and open a PR:** the remote is `origin` (`DavidMurt/Gameoff.2026`) and PRs target `main`:
+   ```bash
+   git push -u origin <branch-name>
+   gh pr create --base main --title "<summary>" --body "<what changed and how it was tested>"
+   ```
+   The PR description should say what changed, why, and how it was verified (type-check, build, manual run in `yarn dev`).
+5. **Don't merge:** leave review and merging to a human. Don't force-push to `main` or delete other branches.
+6. **Keep `AGENTS.md` current:** if your change adds folders, scenes or conventions, update this file in the same PR.
