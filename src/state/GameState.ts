@@ -13,6 +13,8 @@ interface SaveData {
     roomNotes: Record<string, string>;
     viewers: ViewerTarget[];
     leftPanel: 'map' | 'rooms';
+    activeRoom?: string | null;
+    activeLog?: string | null;
 }
 
 export interface SubmitResult {
@@ -23,7 +25,8 @@ export interface SubmitResult {
 
 // The whole investigation: system time, log placements, locks, batches and player notes.
 // Panels listen to its events and redraw:
-//   "timeChanged", "logsChanged", "viewerChanged", "namesChanged", "batchChanged", "panelChanged", "gameComplete"
+//   "timeChanged", "logsChanged", "viewerChanged", "namesChanged", "batchChanged", "panelChanged", "activeChanged",
+//   "gameComplete"
 export class GameState extends Phaser.Events.EventEmitter {
     static readonly saveKey = 'nightshift-save';
     static readonly checkDelay = 1500;
@@ -39,6 +42,10 @@ export class GameState extends Phaser.Events.EventEmitter {
     viewers: ViewerTarget[] = [null, null];
     leftPanel: 'map' | 'rooms' = 'map';
     checking = new Set<string>();
+    // The last room the player selected, and the log the arrow keys move: the log clicked on a timeline,
+    // or, once system time moves, the log in the active room at system time.
+    activeRoom: string | null = null;
+    activeLog: string | null = null;
 
     static newGame(): GameState {
         const state = new GameState();
@@ -75,6 +82,8 @@ export class GameState extends Phaser.Events.EventEmitter {
             state.roomNotes = data.roomNotes;
             state.viewers = data.viewers;
             state.leftPanel = data.leftPanel;
+            state.activeRoom = data.activeRoom ?? null;
+            state.activeLog = data.activeLog ?? null;
             // A check that was running when the game was saved is run again.
             state.logStates.forEach((ls) => {
                 if (ls.roomLocked && ls.timeLocked && !ls.verified && !ls.complete) {
@@ -100,7 +109,9 @@ export class GameState extends Phaser.Events.EventEmitter {
             badgeRoles: this.badgeRoles,
             roomNotes: this.roomNotes,
             viewers: this.viewers,
-            leftPanel: this.leftPanel
+            leftPanel: this.leftPanel,
+            activeRoom: this.activeRoom,
+            activeLog: this.activeLog
         };
         localStorage.setItem(GameState.saveKey, JSON.stringify(data));
     }
@@ -137,7 +148,61 @@ export class GameState extends Phaser.Events.EventEmitter {
         if (t !== this.systemTime) {
             this.systemTime = t;
             this.emit("timeChanged", t);
+            if (this.activeRoom) {
+                this.setActiveLog(this.logAt(this.activeRoom, t)?.id ?? null);
+            }
         }
+    }
+
+    // ---------- Active room and log ----------
+
+    // Selecting a room makes it active; its active log is whatever it holds at system time.
+    setActiveRoom(roomId: string) {
+        if (roomId === this.activeRoom) {
+            return;
+        }
+        this.activeRoom = roomId;
+        this.activeLog = this.logAt(roomId, this.systemTime)?.id ?? null;
+        this.changed("activeChanged");
+    }
+
+    // A log clicked on a timeline becomes active, and so does its room if it is placed.
+    selectLog(logId: string) {
+        const room = this.logState(logId).room;
+        if (room !== undefined) {
+            this.activeRoom = room;
+        }
+        this.activeLog = null;
+        this.setActiveLog(logId);
+    }
+
+    setActiveLog(logId: string | null) {
+        if (logId !== this.activeLog) {
+            this.activeLog = logId;
+            this.changed("activeChanged");
+        }
+    }
+
+    // Moves the active log up (-1) or down (+1) its room by one 15 minute step. If system time is inside the
+    // log it moves with it, so the log stays active and the viewers keep showing the same line.
+    nudgeActiveLog(direction: number): boolean {
+        const logId = this.activeLog;
+        if (!logId) {
+            return false;
+        }
+        const ls = this.logState(logId);
+        if (ls.room === undefined) {
+            return false;
+        }
+        const step = direction * 15;
+        const inside = this.systemTime >= ls.time! && this.systemTime < ls.time! + this.log(logId).duration;
+        if (!this.moveLog(logId, ls.room, ls.time! + step)) {
+            return false;
+        }
+        if (inside) {
+            this.setSystemTime(this.systemTime + step);
+        }
+        return true;
     }
 
     // ---------- Log placement ----------
@@ -382,6 +447,9 @@ export class GameState extends Phaser.Events.EventEmitter {
     setViewer(index: number, target: ViewerTarget) {
         this.viewers[index] = target;
         this.changed("viewerChanged");
+        if (target && target.kind === 'room') {
+            this.setActiveRoom(target.id);
+        }
     }
 
     // The room a viewer is showing, if any (an unplaced log has no room).

@@ -47,6 +47,15 @@ export class TimelinePanel extends Phaser.GameObjects.Container {
         const zone = this.scene.add.zone(0, TimelinePanel.colTop, this.w, this.colH).setOrigin(0)
             .setInteractive({ useHandCursor: true });
         zone.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+            // Clicking in a viewer's column makes its room active, so the log under the pointer becomes active.
+            const column = [0, 1].find((i) => {
+                const x = this.x + this.columnX(i);
+                return pointer.x >= x && pointer.x < x + TimelinePanel.colW;
+            });
+            const roomId = column === undefined ? null : this.gs.viewerRoom(column);
+            if (roomId) {
+                this.gs.setActiveRoom(roomId);
+            }
             this.scrubbing = true;
             this.scrubTo(pointer);
         });
@@ -66,6 +75,7 @@ export class TimelinePanel extends Phaser.GameObjects.Container {
         this.gs.on("logsChanged", rebuild);
         this.gs.on("viewerChanged", rebuild);
         this.gs.on("batchChanged", rebuild);
+        this.gs.on("activeChanged", rebuild);
         this.gs.on("timeChanged", () => this.drawTime());
         this.rebuild();
     }
@@ -101,6 +111,9 @@ export class TimelinePanel extends Phaser.GameObjects.Container {
             if (!roomId) {
                 return;
             }
+            if (roomId === this.gs.activeRoom) {
+                Glass.glowRect(g, x, 76, TimelinePanel.colW, 22, Theme.active, 1.5, 0.6);
+            }
             this.addLabel(x + 2, 78, roomId, 15, Theme.text);
             this.gs.placedLogsInRoom(roomId).forEach((log) => {
                 const ls = this.gs.logState(log.id);
@@ -108,6 +121,9 @@ export class TimelinePanel extends Phaser.GameObjects.Container {
                 const color = TimelineDraw.blockColor(this.gs, log.id);
                 TimelineDraw.drawBlock(g, x + 3, y, TimelinePanel.colW - 6, log.duration * ppm, color,
                     ls.roomLocked && ls.timeLocked);
+                if (log.id === this.gs.activeLog) {
+                    TimelineDraw.drawActive(g, x + 3, y, TimelinePanel.colW - 6, log.duration * ppm);
+                }
                 this.addLabel(x + 6, y + 3, log.id, 12, Theme.text);
             });
         });

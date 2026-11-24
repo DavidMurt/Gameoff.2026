@@ -4,6 +4,7 @@ import { RoomTimelinePanel } from "../component/RoomTimelinePanel";
 import { TabsPanel } from "../component/TabsPanel";
 import { TimelinePanel } from "../component/TimelinePanel";
 import { ViewerPanel } from "../component/ViewerPanel";
+import { TextField } from "../component/TextField";
 import { Wallpaper } from "../component/Wallpaper";
 import { GameState } from "../state/GameState";
 import { Settings } from "../state/Settings";
@@ -59,6 +60,12 @@ export class GameScene extends Phaser.Scene {
             this.lastWheel = this.time.now;
         });
 
+        // Up and down move the active log through its room in 15 minute steps.
+        const keyboard = this.input.keyboard!;
+        keyboard.addCapture([Phaser.Input.Keyboard.KeyCodes.UP, Phaser.Input.Keyboard.KeyCodes.DOWN]);
+        keyboard.on("keydown-UP", () => this.nudgeActiveLog(-1));
+        keyboard.on("keydown-DOWN", () => this.nudgeActiveLog(1));
+
         this.gs.on("gameComplete", () => {
             this.time.delayedCall(1200, () => this.scene.start("EndScene"));
         });
@@ -77,6 +84,12 @@ export class GameScene extends Phaser.Scene {
         } else if (time - this.lastWheel > 250) {
             // Drop part-notches left over from a trackpad gesture once the wheel has gone quiet.
             this.wheelNotches = 0;
+        }
+    }
+
+    nudgeActiveLog(direction: number) {
+        if (!TextField.focused) {
+            this.gs.nudgeActiveLog(direction);
         }
     }
 
