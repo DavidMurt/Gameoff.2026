@@ -1,10 +1,12 @@
 import { Clock } from "../state/Clock";
 import { GameState } from "../state/GameState";
+import { Settings } from "../state/Settings";
+import { Button } from "./Button";
 import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 import { TimelineDraw } from "./TimelineDraw";
 
-// The narrow timeline on the right: one column for each viewer's room. Click it to jump in time.
+// The narrow timeline on the right: one column for each viewer's room. Click, or click and drag, to move system time.
 export class TimelinePanel extends Phaser.GameObjects.Container {
     static readonly colTop = 110;
     static readonly colW = 46;
@@ -16,13 +18,14 @@ export class TimelinePanel extends Phaser.GameObjects.Container {
     graphics: Phaser.GameObjects.Graphics;
     timeG: Phaser.GameObjects.Graphics;
     labels: Phaser.GameObjects.Text[] = [];
+    scrubbing = false;
 
     constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, state: GameState) {
         super(scene, x, y);
         this.gs = state;
         this.w = w;
         this.h = h;
-        this.colH = h - TimelinePanel.colTop - 40;
+        this.colH = h - TimelinePanel.colTop - 84;
         this.create();
     }
 
@@ -34,17 +37,29 @@ export class TimelinePanel extends Phaser.GameObjects.Container {
         const frame = this.scene.add.graphics();
         Glass.panel(frame, 0, 0, this.w, this.h);
         const title = Theme.glowText(this.scene.add.text(12, 18, 'TIMELINE', Theme.titleStyle(16)));
-        const footer = this.scene.add.text(10, this.h - 28, 'VIEWER 1 / 2', Theme.style(13, Theme.textDim));
+        const footer = this.scene.add.text(10, this.h - 74, 'VIEWER 1 / 2', Theme.style(13, Theme.textDim));
+        const wheel = new Button(this.scene, 8, this.h - 50, this.w - 16, 38, this.wheelText(), () => {
+            Settings.cycleWheelMinutes();
+            wheel.setText(this.wheelText());
+        }, 14);
         this.graphics = this.scene.add.graphics();
         this.timeG = this.scene.add.graphics();
         const zone = this.scene.add.zone(0, TimelinePanel.colTop, this.w, this.colH).setOrigin(0)
             .setInteractive({ useHandCursor: true });
         zone.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-            const r = this.gs.range();
-            const localY = pointer.y - this.y - TimelinePanel.colTop;
-            this.gs.setSystemTime(r.start + localY / this.colH * (r.end - r.start));
+            this.scrubbing = true;
+            this.scrubTo(pointer);
         });
-        this.add([frame, title, footer, this.graphics, this.timeG, zone]);
+        // Holding the button down keeps system time under the pointer, even outside the panel.
+        this.scene.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+            if (this.scrubbing && pointer.isDown) {
+                this.scrubTo(pointer);
+            }
+        });
+        this.scene.input.on("pointerup", () => {
+            this.scrubbing = false;
+        });
+        this.add([frame, title, footer, wheel, this.graphics, this.timeG, zone]);
         this.scene.add.existing(this);
 
         const rebuild = () => this.rebuild();
@@ -53,6 +68,16 @@ export class TimelinePanel extends Phaser.GameObjects.Container {
         this.gs.on("batchChanged", rebuild);
         this.gs.on("timeChanged", () => this.drawTime());
         this.rebuild();
+    }
+
+    wheelText(): string {
+        return 'WHEEL ' + Settings.wheelMinutes + ' MIN';
+    }
+
+    scrubTo(pointer: Phaser.Input.Pointer) {
+        const r = this.gs.range();
+        const localY = pointer.y - this.y - TimelinePanel.colTop;
+        this.gs.setSystemTime(r.start + localY / this.colH * (r.end - r.start));
     }
 
     rebuild() {

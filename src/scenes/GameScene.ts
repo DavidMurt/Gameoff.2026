@@ -6,10 +6,19 @@ import { TimelinePanel } from "../component/TimelinePanel";
 import { ViewerPanel } from "../component/ViewerPanel";
 import { Wallpaper } from "../component/Wallpaper";
 import { GameState } from "../state/GameState";
+import { Settings } from "../state/Settings";
 
 // The investigation screen: map / all-rooms panel, two viewers and the timeline, all bound to system time.
 export class GameScene extends Phaser.Scene {
+    // How far a browser wheel event moves for one notch, per WheelEvent.deltaMode (pixels, lines, pages).
+    static readonly notchSize = [100, 3, 1];
+
     gs: GameState;
+    // Wheel movement not yet applied, in notches. Applied once per frame in update(), so a burst of wheel
+    // events moves time once and the panels redraw once, instead of queueing redraws that keep going after
+    // the wheel has stopped.
+    wheelNotches = 0;
+    lastWheel = 0;
 
     constructor() {
         super("GameScene");
@@ -43,8 +52,11 @@ export class GameScene extends Phaser.Scene {
         new TimelinePanel(this, timelineX, margin, timelineW, height, this.gs);
 
         // The mouse wheel always moves system time, wherever the pointer is.
-        this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _over: Phaser.GameObjects.GameObject[], _dx: number, dy: number) => {
-            this.gs.setSystemTime(this.gs.systemTime + Math.sign(dy));
+        this.wheelNotches = 0;
+        this.input.on("wheel", (pointer: Phaser.Input.Pointer, _over: Phaser.GameObjects.GameObject[], _dx: number, dy: number) => {
+            const mode = (pointer.event as WheelEvent).deltaMode ?? 0;
+            this.wheelNotches += dy / (GameScene.notchSize[mode] ?? 100);
+            this.lastWheel = this.time.now;
         });
 
         this.gs.on("gameComplete", () => {
@@ -55,6 +67,17 @@ export class GameScene extends Phaser.Scene {
             this.gs.save();
             this.gs.removeAllListeners();
         });
+    }
+
+    update(time: number) {
+        const steps = Math.trunc(this.wheelNotches);
+        if (steps !== 0) {
+            this.wheelNotches -= steps;
+            this.gs.setSystemTime(this.gs.systemTime + steps * Settings.wheelMinutes);
+        } else if (time - this.lastWheel > 250) {
+            // Drop part-notches left over from a trackpad gesture once the wheel has gone quiet.
+            this.wheelNotches = 0;
+        }
     }
 
     toMenu() {

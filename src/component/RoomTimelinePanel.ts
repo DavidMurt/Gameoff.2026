@@ -43,6 +43,7 @@ export class RoomTimelinePanel extends Phaser.GameObjects.Container {
     rightButton: Button;
     drag: DragInfo | null = null;
     pendingRebuild = false;
+    scrubbing = false;
 
     constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, state: GameState,
         onSwap: () => void) {
@@ -64,7 +65,7 @@ export class RoomTimelinePanel extends Phaser.GameObjects.Container {
         const swap = new Button(this.scene, this.w - 200, 12, 186, 40, '⇄ MAP', onSwap, 18);
         const hint = this.scene.add.text(16, this.h - 38,
             'grid = 15 min · solid = both locked · dashed = not fully locked · drag logs between rooms and times\n' +
-            'left click: viewer 1 · right click: viewer 2 · click the hour labels to jump in time',
+            'left click: viewer 1 · right click: viewer 2 · click or drag on the hour labels to move in time',
             Theme.style(13, Theme.textDim));
         this.add([frame, title, this.leftButton, this.rightButton, swap, hint]);
         this.scene.add.existing(this);
@@ -79,6 +80,15 @@ export class RoomTimelinePanel extends Phaser.GameObjects.Container {
         this.gs.on("batchChanged", rebuild);
         this.gs.on("panelChanged", rebuild);
         this.gs.on("timeChanged", () => this.drawTime());
+        // Click and hold on the hour labels to drag system time.
+        this.scene.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+            if (this.scrubbing && pointer.isDown && this.shown) {
+                this.scrubTo(pointer);
+            }
+        });
+        this.scene.input.on("pointerup", () => {
+            this.scrubbing = false;
+        });
         this.rebuild();
     }
 
@@ -110,6 +120,10 @@ export class RoomTimelinePanel extends Phaser.GameObjects.Container {
         const max = Math.max(0, this.gs.audioRooms().length - this.visibleCount);
         this.scrollIndex = Phaser.Math.Clamp(this.scrollIndex + delta, 0, max);
         this.rebuild();
+    }
+
+    scrubTo(pointer: Phaser.Input.Pointer) {
+        this.gs.setSystemTime(this.gs.range().start + (pointer.y - this.colTopY) / this.ppm);
     }
 
     requestRebuild() {
@@ -148,7 +162,8 @@ export class RoomTimelinePanel extends Phaser.GameObjects.Container {
         const hourZone = this.scene.add.zone(this.x + 4, top, 58, this.colH).setOrigin(0)
             .setInteractive({ useHandCursor: true });
         hourZone.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-            this.gs.setSystemTime(r.start + (pointer.y - top) / ppm);
+            this.scrubbing = true;
+            this.scrubTo(pointer);
         });
         this.dynamic.push(hourZone);
 

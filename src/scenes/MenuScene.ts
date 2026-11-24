@@ -3,6 +3,7 @@ import { Glass } from "../component/Glass";
 import { Theme } from "../component/Theme";
 import { Wallpaper } from "../component/Wallpaper";
 import { GameState } from "../state/GameState";
+import { Settings } from "../state/Settings";
 
 // Main menu: new investigation, continue, settings. A new game shows the shift handover briefing first.
 export class MenuScene extends Phaser.Scene {
@@ -14,6 +15,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     create() {
+        Settings.load();
         this.overlay = null;
         const cx = this.cameras.main.width / 2;
         const cy = this.cameras.main.height / 2;
@@ -83,7 +85,8 @@ export class MenuScene extends Phaser.Scene {
             '',
             'Your job: put every log back in the right ROOM at the right TIME.',
             '',
-            '· Mouse wheel moves system time. Every panel follows it.',
+            '· Mouse wheel moves system time (set the step in Settings). Every panel follows it.',
+            '· Click and hold on a timeline to drag system time.',
             '· Left click a room for viewer 1, right click for viewer 2.',
             '· ⇄ ALL ROOMS: drag logs out of UNPLACED into a room, on the 15-minute grid.',
             '· Lock the room and the time in a viewer. Both locked = the log is verified.',
@@ -97,17 +100,23 @@ export class MenuScene extends Phaser.Scene {
     showSettings() {
         const cx = this.cameras.main.width / 2;
         const cy = this.cameras.main.height / 2;
-        const overlay = this.openOverlay(600, 420);
-        overlay.add(this.add.text(cx, cy - 160, 'SETTINGS', Theme.titleStyle(30)).setOrigin(0.5));
-        overlay.add(new Button(this, cx - 200, cy - 90, 400, 56, 'TOGGLE FULLSCREEN', () => this.scale.toggleFullscreen(), 22));
-        const erase = new Button(this, cx - 200, cy - 14, 400, 56, 'ERASE SAVED GAME', () => {
+        const overlay = this.openOverlay(600, 540);
+        overlay.add(this.add.text(cx, cy - 210, 'SETTINGS', Theme.titleStyle(30)).setOrigin(0.5));
+        overlay.add(new Button(this, cx - 200, cy - 140, 400, 56, 'TOGGLE FULLSCREEN', () => this.scale.toggleFullscreen(), 22));
+        const wheel = new Button(this, cx - 200, cy - 64, 400, 56, Settings.wheelLabel(), () => {
+            Settings.cycleWheelMinutes();
+            wheel.setText(Settings.wheelLabel());
+        }, 22);
+        overlay.add(wheel);
+        overlay.add(this.add.text(cx, cy + 4, 'minutes of system time per mouse wheel notch', Theme.style(15, Theme.textDim)).setOrigin(0.5));
+        const erase = new Button(this, cx - 200, cy + 40, 400, 56, 'ERASE SAVED GAME', () => {
             GameState.clearSave();
             this.continueButton.setEnabled(false);
             erase.setText('SAVE ERASED').setEnabled(false);
         }, 22);
         erase.setEnabled(GameState.hasSave());
         overlay.add(erase);
-        overlay.add(this.add.text(cx, cy + 74, 'Audio: none yet', Theme.style(18, Theme.textDim)).setOrigin(0.5));
-        overlay.add(new Button(this, cx - 120, cy + 120, 240, 56, 'BACK', () => this.closeOverlay(), 22));
+        overlay.add(this.add.text(cx, cy + 128, 'Audio: none yet', Theme.style(18, Theme.textDim)).setOrigin(0.5));
+        overlay.add(new Button(this, cx - 120, cy + 170, 240, 56, 'BACK', () => this.closeOverlay(), 22));
     }
 }
