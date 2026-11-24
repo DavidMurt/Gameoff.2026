@@ -1,0 +1,13 @@
+{
+    "rooms": [
+        { "id": "1001", "col": 0, "row": 0, "audio": "online", "proximity": "online", "note": "Room A" },
+        { "id": "1002", "col": 1, "row": 0, "audio": "none", "proximity": "online", "note": "Corridor" },
+        { "id": "1003", "col": 2, "row": 0, "audio": "online", "proximity": "none", "note": "Room B" },
+        { "id": "1004", "col": 1, "row": 1, "audio": "online", "proximity": "corrupted", "note": "Room C" }
+    ],
+    "corridors": [
+        ["1001", "1002"],
+        ["1002", "1003"],
+        ["1002", "1004"]
+    ]
+}

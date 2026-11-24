@@ -24,3 +24,12 @@ Thumbs.db
 # Editor directories and files
 .vscode/
 .idea/
+# Story spoilers: kept only on the writer's machine. Fresh clones get the
+# *.example.json placeholders copied into place by `yarn install` (scripts/setup-data.mjs).
+src/data/logs.json
+src/data/batches.json
+src/data/badges.json
+src/data/rooms.json
+docs/IDEAS.md
+docs/characters.md
+docs/story.md

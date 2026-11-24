@@ -1,0 +1,30 @@
+[
+    {
+        "id": "1111",
+        "note": "Alpha",
+        "invisible": false,
+        "moves": [
+            { "at": "03:00", "room": "1001" },
+            { "at": "03:40", "room": "1002" },
+            { "at": "03:45", "room": "1003" }
+        ]
+    },
+    {
+        "id": "2222",
+        "note": "Bravo",
+        "invisible": false,
+        "moves": [
+            { "at": "03:00", "room": "1001" },
+            { "at": "04:00", "room": "1002", "invisible": true },
+            { "at": "04:05", "room": "1004" }
+        ]
+    },
+    {
+        "id": "3333",
+        "note": "Charlie",
+        "invisible": true,
+        "moves": [
+            { "at": "03:00", "room": "1004" }
+        ]
+    }
+]
