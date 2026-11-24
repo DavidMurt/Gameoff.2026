@@ -87,3 +87,25 @@ Follow the style already in the codebase:
 - Don't commit `node_modules/`, `dist/`, `.vite/` or `.vscode/` (see `.gitignore`).
 - Don't upgrade Phaser or Vite unless asked. This project uses Phaser 4, whose APIs differ from Phaser 3 — check the Phaser 4 docs/typings (`node_modules/phaser/types`) rather than relying on Phaser 3 examples.
 - Keep changes small and in the style above; there's no linter or formatter configured, so match surrounding code by hand.
+
+## Git workflow
+
+Each agent works on its own branch and finishes with a pull request. Never commit directly to `main`.
+
+1. **Branch:** start from an up-to-date `main` and create a new branch for the task:
+   ```bash
+   git switch main
+   git pull
+   git switch -c <short-kebab-case-name>   # e.g. data-overlap-checker
+   ```
+   One branch per task. Don't reuse another agent's branch or work on top of someone else's uncommitted changes. If the working tree is dirty when you start, stop and ask instead of stashing, discarding or committing those changes.
+2. **Work:** make the changes on that branch only. Before committing, run `npx tsc --noEmit`, plus `yarn build` for larger changes.
+3. **Commit:** stage only the files you changed (`git add <paths>`, not `git add -A`). Write a short, imperative, sentence-case commit message, e.g. `Add data checker for overlapping logs per room`. Split unrelated changes into separate commits.
+4. **Push and open a PR:** the remote is `origin` (`DavidMurt/Gameoff.2026`) and PRs target `main`:
+   ```bash
+   git push -u origin <branch-name>
+   gh pr create --base main --title "<summary>" --body "<what changed and how it was tested>"
+   ```
+   The PR description should say what changed, why, and how it was verified (type-check, build, manual run in `yarn dev`).
+5. **Don't merge:** leave review and merging to a human. Don't force-push to `main` or delete other branches.
+6. **Keep `AGENTS.md` current:** if your change adds folders, scenes or conventions, update this file in the same PR.
