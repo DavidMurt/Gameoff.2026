@@ -12,13 +12,14 @@ export interface WrappedLine {
 export class LineWrap {
     static readonly linesPerMinute = 3;
     static readonly charsPerLine = 36;
-    // Player-entered names are cut to this length in transcript labels, so a filled-in name can never
-    // push a minute past its line limit. The authoring check assumes a name this long.
-    static readonly nameChars = 8;
+    // Once the player names a badge, the name replaces the ID in transcript labels ("<Bob>" instead of
+    // "<ID#4553>"). Names are cut to this length, so a filled-in name can never push a minute past its
+    // line limit. The authoring check assumes a name this long.
+    static readonly nameChars = 16;
 
     static label(badgeId: string, name = ''): string {
         const shown = name.slice(0, LineWrap.nameChars);
-        return shown ? '<ID#' + badgeId + ' - ' + shown + '>' : '<ID#' + badgeId + '>';
+        return shown ? '<' + shown + '>' : '<ID#' + badgeId + '>';
     }
 
     // Word wrap to `charsPerLine`; words longer than a line are broken.

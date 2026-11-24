@@ -185,9 +185,11 @@ export class MapPanel extends Phaser.GameObjects.Container {
         }
         const ids = this.gs.badgesIn(room.id, t);
         let lines = ids.map((id) => {
-            const name = this.gs.badgeNames[id];
-            const shown = room.proximity === 'corrupted' ? id.slice(0, 1) + '▒▒' + id.slice(3) : id;
-            return '#' + shown + (name && room.proximity !== 'corrupted' ? ' ' + name : '');
+            // A corrupted sensor only gives part of the ID. Otherwise a name the player filled in replaces the ID.
+            if (room.proximity === 'corrupted') {
+                return '#' + id.slice(0, 1) + '▒▒' + id.slice(3);
+            }
+            return this.gs.badgeNames[id] || '#' + id;
         });
         if (lines.length > 5) {
             lines = lines.slice(0, 4).concat(['+' + (ids.length - 4) + ' more']);
