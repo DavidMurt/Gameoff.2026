@@ -420,9 +420,9 @@ export class GameState extends Phaser.Events.EventEmitter {
             .sort();
     }
 
+    // The player's name for a badge once they've filled it in, otherwise its ID.
     badgeLabel(id: string): string {
-        const name = this.badgeNames[id];
-        return name ? 'ID#' + id + ' - ' + name : 'ID#' + id;
+        return this.badgeNames[id] || 'ID#' + id;
     }
 
     roomLabel(id: string): string {
