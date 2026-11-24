@@ -26,8 +26,11 @@ VS Code launch configs in `.vscode/launch.json` attach Edge to `localhost:5500`.
 ```
 src/
   main.ts          # Game config + Boot scene; registers other scenes
-  scenes/          # One Phaser.Scene subclass per file (e.g. MenuScene.ts)
-  component/       # Reusable GameObjects / Containers (e.g. LoadThing.ts)
+  PhaserGlobal.ts  # Exposes the global `Phaser` (the ESM build doesn't); imported first by main.ts
+  scenes/          # One Phaser.Scene subclass per file (Menu, Game, End, Preload)
+  component/       # Reusable GameObjects / Containers (panels, Button, TextField, Theme...)
+  data/            # Story data types and content (SampleData.ts is placeholder)
+  state/           # GameState (time, placements, locks, batches, save) and Clock helpers
 assets/            # Images and fonts, loaded by relative path 'assets/...'
   fonts/           # .ttf fonts and bitmap fonts (.png + .xml pairs)
 docs/              # Design references (not loaded by the game)
@@ -49,7 +52,7 @@ New scenes go in `src/scenes/`, new reusable game objects in `src/component/`.
 - Native resolution is **1920×1080** (HD), scaled with `Scale.FIT` and centered. `pixelArt` is off, so text and lines render smoothly. Design all layout at that resolution and position things relative to `this.cameras.main.width / height`, not hard-coded screen pixels.
 - Graphics are deliberately simple: flat panels, lines, boxes and text (mostly `Phaser.GameObjects.Graphics`, rectangles and text objects). Keep text large enough to stay readable when the game is scaled down to smaller windows.
 - Background colour is `#2f2f2f`; UI uses white (`0xffffff`).
-- Scene flow: `Boot` → `PreloadScene` → `MenuScene`.
+- Scene flow: `Boot` → `PreloadScene` → `MenuScene` → `GameScene` (investigation) → `EndScene`. Shared progress lives in a `GameState` stored in `this.registry` under `'state'`.
   - `Boot` (in `main.ts`) loads only what the preloader itself needs (`DG` logo, `pixel` bitmap font), then registers the other scenes with `this.scene.add(key, Class)` and starts `PreloadScene`.
   - `PreloadScene` shows the logo/loading bar, queues all game assets in `preload()`, and starts `MenuScene` from the loader's `complete` event.
   - When adding a scene, register it in `Boot.create()` the same way.
