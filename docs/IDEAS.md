@@ -20,6 +20,8 @@ The **video system is offline** and unlikely to be recovered. What survives is t
 
 It's a **supernatural mystery**. The facility studies strange artifacts of supernatural origin, and one of them, Artifact-01, did things that night that show up in the logs and in what people did. The full story design is in [story.md](story.md).
 
+The AI is passive infrastructure, not a character or assistant. The player does not converse with it, ask it to analyze evidence, or receive hints from it. The player alone interprets the available data and places the logs.
+
 ### How it uses the theme
 
 - **Time:** the incident happened on the *night shift*, and you're piecing it together at the start of yours. The shift handover is the framing device.
@@ -33,20 +35,23 @@ The game is about **placing logs**. Each log is a fragment of audio transcript t
 1. **Read** an unplaced log from the current batch.
 2. **Cross-reference** it with logs that are already placed, the proximity data on the map, and the badge log.
 3. **Place** the log on a room timeline: move it to the right **room** and **time**.
-4. **Lock** the room and the time. Once both are locked, the system checks the placement, and if both are right the log is marked **correct**.
-5. When enough logs are correct, the IT department **decrypts the next batch** and sends it over.
-6. When **every log** has been placed correctly, the game is complete and the mystery is solved.
+4. **Lock** the room and the time. Once both are locked, the system checks that log's placement and marks the log **Complete** or **Incomplete**.
+5. Correct logs remain complete while the player works on the others. The batch is **Complete** only when every log in it is complete; otherwise, the batch is **Incomplete**.
+6. When the player submits a batch for verification, the system generates its hash. A complete batch's hash unlocks the next batch; an incomplete batch can be revised and checked again.
+7. When **every log** has been placed correctly, the game is complete and the mystery is solved.
 
 ### Progression: log batches
 
 The player shouldn't be hit with everything at once, so logs arrive in **batches**.
 
 - The game starts with a small first batch, which doubles as the tutorial.
-- When the player has correctly placed a **set number** of logs from the current batch, the IT department decrypts the next batch and sends it over. The player doesn't have to finish a whole batch to move on, so one stubborn log can't block progress.
+- The player must correctly place **every log** in the current batch before its hash unlocks the next batch.
+- Logs are checked individually, so correct placements stay complete even when other logs in the batch are still incomplete.
+- A batch hash represents the submitted arrangement. Only a complete batch produces an accepted hash that can decrypt the next batch; this is a fictional progression mechanic, not a requirement for real blockchain infrastructure.
 - Each batch reveals more of the night: more rooms, more people and more of what happened.
-- **Batch sizes and unlock thresholds** may differ per batch. They'll be decided during the story design.
+- **Batch sizes** may differ per batch and will be decided during story design. Every log in a batch must be complete before its hash unlocks the next batch.
 - **The timeline expands as the game goes on.** The game starts with only **hour 6** of the shift. By the end, **hours 1 to 9** are available. There is no hour 10.
-- **Hour 9 is a bonus hour (decided).** Its logs (police interviews) are released **one at a time** instead of in a batch, and the **last log** ends the game. Which hours open up when is decided by the story. The timelines in every panel only show the hours unlocked so far.
+- **Hour 9 is a bonus hour (decided).** Its logs (police interviews) are released **one at a time as one-log batches**, and the **last log** ends the game. Which hours open up when is decided by the story. The timelines in every panel only show the hours unlocked so far.
 - The game ends when **all logs** are placed correctly. The full timeline is then complete, and the mystery is solved.
 
 This gives us direct control over pacing and the order in which the story is revealed: what's in each batch decides what the player learns and when.
@@ -56,7 +61,7 @@ Rough shape:
 1. **Batch 1 (tutorial):** a few logs, most with obvious clues (a room named out loud, a time on a PA announcement). Teaches placing, verifying and filling in the badge log.
 2. **Middle batches:** more rooms and people, and placement depends more on cross-referencing logs that are already correct.
 3. **Final batches:** logs from the heart of the incident, the hardest to place, which reveal the secrets (see [story.md](story.md)).
-4. **End:** every log is correct, and the night can be replayed in full.
+4. **End:** every log is correct, the final batch is complete, and the night can be replayed in full.
 
 #### What a log looks like
 
@@ -94,6 +99,15 @@ interface LogEntry {
     offset: number;     // minutes after the log's timestamp
     badgeId?: string;   // missing for sound events
     text: string;       // speech, or a sound such as "[LOUD CRASH]"
+    formatting?: TextStyle[]; // authored emphasis such as italics, bold or color
+}
+
+interface TextStyle {
+    start: number;      // character offset in the entry text
+    end: number;        // exclusive character offset
+    bold?: boolean;
+    italic?: boolean;
+    color?: string;
 }
 
 interface Log {
@@ -112,10 +126,18 @@ interface LogState {
     systemTime: number;     // where the log's top edge is, in minutes
     roomLocked: boolean;    // can only move vertically
     timeLocked: boolean;    // can only move horizontally
-    verified: boolean;      // false until checked; "not verified" if both locks are set and this is false
-    correct: boolean;       // only ever true when both locks are set; permanent once true
+    verified: boolean;      // false until the placement is checked
+    complete: boolean;      // true only when this log's room and time are correct; permanent once true
+}
+
+interface BatchState {
+    batch: number;
+    complete: boolean;      // true only when every log in the batch is complete
+    hash?: string;          // generated on submission; an accepted hash unlocks the next batch
 }
 ```
+
+Text formatting is presentation only. The game does not explain what bold, italics or color mean; players may infer patterns (for example, italics appearing in radio transmissions) by comparing the logs.
 
 - **Every log arrives with no placement information.** All new logs appear in the unplaced column with no room and no time.
 
@@ -142,12 +164,12 @@ There are two **viewer panels** (1 and 2), and each one is set to a room **indep
 
 #### Log states
 
-Every log has a **correctness** state and **two independent locks**.
+Every log has a **completion** state and **two independent locks**.
 
-**Correctness**
+**Completion**
 
-- **Unknown:** the player hasn't yet put the log in the correct room at the correct time. Every log starts as unknown.
-- **Correct:** the log is in the correct room at the correct system time.
+- **Incomplete:** the log has not yet been accepted as correctly placed. New logs start incomplete.
+- **Complete:** the log is in the correct room at the correct system time.
 
 **Locks**
 
@@ -162,8 +184,9 @@ The two locks constrain how the block can move on the timelines:
 
 - Each lock can be set and released **independently**, in any order.
 - The check only happens once **both** locks are set.
-- If the check passes, the log is marked **correct**. Both locks then become permanent; a correct log can never be unlocked.
-- If the check fails, the log shows **not verified** and stays **unknown**. The player can release either lock and keep adjusting.
+- If the check passes, the log is marked **Complete**. Both locks then become permanent; a complete log can never be unlocked.
+- If the check fails, the log remains **Incomplete** and the player can release either lock and keep adjusting.
+- Each log is checked independently. The batch remains **Incomplete** until every log in it is complete.
 
 #### Placing and locking a log
 
@@ -171,13 +194,13 @@ A typical placement:
 
 1. The player is fairly sure which room a log belongs in, so they drag it to that room's column and **lock the room**.
 2. They slide it up and down that room's timeline, lining up shared events with other logs, until the time looks right.
-3. They **lock the time**. Both locks are now set, so the system runs a short **check**, lasting a second or two.
-4. If both the room and the time are right, the log is marked **correct**. Otherwise it shows **not verified**. The player might release the room lock and slide the log sideways into another room at the same time, which is useful when they're sure of the time but not the room.
+3. They **lock the time**. Both locks are now set, so the system checks the log's placement.
+4. If both the room and the time are right, the log is marked **Complete**. Otherwise it remains **Incomplete**. The player might release the room lock and slide the log sideways into another room at the same time, which is useful when they're sure of the time but not the room.
 
 Other notes:
 
 - Logs can only go in rooms with an **audio sensor**, which narrows down the options.
-- A not-verified log still sits in the timeline, which can help the player work out what's wrong with it.
+- An incomplete log still sits in the timeline, which can help the player work out what's wrong with it.
 - **Preventing guessing:** once the player has locked both the time and the room, a short **check time** of a second or two runs before the result appears. It can be presented as the system "verifying" the log, with a small progress indicator.
 - **Guessing risk with 15-minute slots:** even the full 8 hours in the game have only 32 slots per room. With 5 rooms that's 160 positions, so at 2 seconds per check, trying every one takes about 5 minutes per log. Guessing is much more practical than with minute-level placement. Options if it becomes a problem:
   - Locking the room first cuts it to 32 tries per log, so consider making the check longer.
@@ -265,9 +288,41 @@ Each room can have **none, one or both** of two sensor types:
 
 - **Secrets:** some contradictions in the logs aren't errors. They have a cause the player has to deduce, such as radios or an artifact's effect. See *Secrets* in [story.md](story.md).
 
+### Player screens and game systems
+
+The game is presented as an emergency security console. The main investigation stays on one screen; the menu, loading and ending states are separate, lightweight screens.
+
+**Boot and loading screen**
+
+- Loads the game and transitions into the main menu or investigation.
+- Keep presentation brief; it is not a gameplay system.
+
+**Main menu**
+
+- Start a new investigation or continue a saved one.
+- Provide basic settings such as audio and display options.
+
+**Investigation screen**
+
+- The primary gameplay screen, described in detail below: map and reference tabs, two log viewers, room timelines and an unplaced-log column.
+- Show the current batch and per-log progress. The player can inspect and reposition incomplete logs without disturbing completed ones.
+- Display rich-text styles in log contents without explaining their meaning.
+
+**Batch verification and progression**
+
+- Verify each log independently and display its Complete or Incomplete state.
+- Derive the batch state from its logs: Complete only when every log is complete; otherwise, Incomplete.
+- Generate a hash for the submitted arrangement and mark the batch Complete or Incomplete. An accepted hash for a complete batch unlocks the next batch. An incomplete submission preserves individually completed logs and allows revisions and resubmission.
+- The batch hash links progression to the previous batch's hash. This is a fictional verification and progression mechanic; real blockchain infrastructure is not required.
+
+**Investigation completion**
+
+- After all batches and logs are complete, show an ending or case-summary screen presenting the reconstructed sequence.
+- Replaying the whole night after completion is a stretch goal.
+
 ### The emergency GUI
 
-The whole game lives on one screen: a cut-down security console at **HD resolution (1920×1080)**. The graphics are deliberately simple: flat panels, lines, boxes and text. The high resolution keeps the logs readable and leaves enough room for the map and both viewer panels side by side. The fictional product needs a name; placeholders are **WARDEN**, **SENTINEL/ER** or **BASTION Recovery Mode**.
+The investigation lives on one screen: a cut-down security console at **HD resolution (1920×1080)**. The graphics are deliberately simple: flat panels, lines, boxes and text. The high resolution keeps the logs readable and leaves enough room for the map and both viewer panels side by side. The fictional product needs a name; placeholders are **WARDEN**, **SENTINEL/ER** or **BASTION Recovery Mode**.
 
 #### Everything is tied to system time
 
@@ -367,7 +422,7 @@ Each section of the GUI is a data source:
 - **Internal mail / chat:** staff messages that give context and motive (optional)
 - **Video archive:** permanently shows `OFFLINE`, as flavour and a reminder of why you're doing this the hard way
 
-Contradictions between sources are the main puzzle. For example, the transcript puts `ID #4553` speaking in room `B2-07` at 02:14, but at 02:12 the map shows that badge in `A1-03`. Either the AI got the speaker wrong, or something stranger is going on.
+The AI produces and records the transcripts passively; it does not respond to player queries, interpret evidence for the player, or provide hints. Contradictions between sources are the main puzzle. For example, the transcript puts `ID #4553` speaking in room `B2-07` at 02:14, but at 02:12 the map shows that badge in `A1-03`. Either the AI got the speaker wrong, or something stranger is going on.
 
 ### Corruption as a mechanic
 
@@ -385,7 +440,17 @@ The transcripts can be wrong in two ways, and each one gives the player somethin
 - Partly garbled lines (`▒▒░▓` characters)
 - Missing chunks of time
 
-In both cases, the player fills the gaps by inference from other sources.
+In both cases, the player fills the gaps by inference from other sources. The AI's imperfections are properties of the records, not an invitation for the player to interact with or consult the AI.
+
+### Developer tool: Log Workbench
+
+The Log Workbench is a developer-facing authoring and test tool, separate from the player interface. It helps create and compare the content and its hidden answer key.
+
+- Create and edit batches and logs, including intended room, time, duration, entries and other relevant metadata.
+- Select text spans and apply bold, italics or color; preview the rendered log as it will appear in the game.
+- Keep intended placements and authoring data separate from player-visible content so answer keys cannot leak into the game.
+- Set up a test arrangement and compare every log's room and time against the answer key. Show Complete or Incomplete per log and derive the batch result.
+- Validate content before use, including missing answers, invalid room or time references, and inconsistent batch data.
 
 ### Story
 
@@ -393,15 +458,18 @@ The premise, tone, background, cast, true timeline, mysteries and **secrets** ar
 
 ### Scope: ★★☆
 
-It's one screen with no physics or animation-heavy work. Most of the effort is **writing and puzzle design**: one tight incident with a consistent timeline across every log. The UI framework (windows, scrolling lists, filtering) is the main code task, and once built it's reused by every data source.
+The investigation is one primary screen with no physics or animation-heavy work; the menu and ending are lightweight screens. Most of the effort is **writing and puzzle design**: one tight incident with a consistent timeline across every log. The UI framework (windows, scrolling lists, filtering) is the main code task, and once built it's reused by every data source. The developer Log Workbench supports authoring and validating the content.
 
 **Minimum shippable version:**
 
 - Main screen: map panel (map and tabs), viewer 1 and 2 panels, timeline panel, and the room/timeline panel swapped in on the left
 - Badge log (Users tab), room registry with sensor status (Rooms tab), and the unplaced column
 - Scrolling and zooming the facility map
-- Room timelines with draggable log blocks, independent room and time locks, and checking once both are locked
-- Three or four batches, unlocked by a set number of correct placements
+- Room timelines with draggable log blocks, independent room and time locks, and per-log checking once both are locked
+- Per-log Complete/Incomplete states and a batch state derived from all logs
+- Batch submission that generates a hash; only a fully complete batch unlocks the next one
+- A Log Workbench for creating, previewing, formatting and comparing batches and logs
+- Main menu and save/resume
 - One incident, told through roughly 30–50 logs
 - An ending once every log is placed (details deferred to the story design)
 - Timelines that expand to more of the shift as batches arrive
@@ -422,7 +490,7 @@ It's one screen with no physics or animation-heavy work. Most of the effort is *
 - **Saving:** the game **autosaves after every log is moved**, and the player can also **save manually** whenever they want.
 - **Controls:** the GUI is **mouse-driven**. The keyboard is used for typing (names, roles and room descriptions), and possibly for **keyboard shortcuts** later.
 - **Shift key:** not used as a control.
-- **Deferred to the story design** (see [story.md](story.md)): batch sizes and unlock thresholds, what happens at the end, and the shift's exact start and end times. Which part of the shift is available at each stage is also set by the story.
+- **Deferred to the story design** (see [story.md](story.md)): batch contents and sizes, what happens at the end, and the shift's exact start and end times. Every batch requires all its logs to be complete; which part of the shift is available at each stage is set by the story.
 
 
 ---
@@ -472,6 +540,7 @@ A space game where your speed changes the colour palette, and objects only exist
 - [ ] Prototype mouse-wheel time scrubbing driving the map panel, both viewer panels and the timelines
 - [ ] Prototype the room/timeline panel: drag log blocks between rooms and along time, room and time locks, and the check
 - [ ] Prototype the badge log and room registry (fill-in forms), with names appearing next to IDs across every section
-- [ ] Prototype batches: unlock the next batch after a set number of correct placements
+- [ ] Prototype batches: check logs independently, preserve completed placements, generate a hash on submission and unlock the next batch only when all logs are complete
+- [ ] Build the Log Workbench: author batches and logs, format and preview text, and compare test placements against the answer key
 - [ ] Decide art palette and mood (CRT green? amber? institutional grey?)
 - [ ] Lock the minimum shippable version vs. stretch goals
