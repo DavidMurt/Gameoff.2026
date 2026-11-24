@@ -46,9 +46,12 @@ export class Dropdown extends Phaser.GameObjects.Container {
         const items = this.getItems();
         const rowH = 34;
         const bounds = this.getBounds();
-        this.menu = this.scene.add.container(bounds.x, bounds.y + this.h).setDepth(1000);
+        // Opens upwards when the list would run off the bottom of the screen.
+        const below = bounds.y + this.h;
+        const top = below + rowH * items.length > this.scene.scale.height ? Math.max(0, bounds.y - rowH * items.length) : below;
+        this.menu = this.scene.add.container(bounds.x, top).setDepth(1000);
         // A full-screen blocker closes the list when the player clicks anywhere else.
-        const blocker = this.scene.add.zone(-bounds.x, -bounds.y - this.h, this.scene.scale.width, this.scene.scale.height)
+        const blocker = this.scene.add.zone(-bounds.x, -top, this.scene.scale.width, this.scene.scale.height)
             .setOrigin(0).setInteractive();
         blocker.on("pointerdown", () => this.close());
         this.menu.add(blocker);

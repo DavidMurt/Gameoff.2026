@@ -29,6 +29,8 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
     parseText: Phaser.GameObjects.Text;
     noteInput: HTMLInputElement;
     script: HTMLTextAreaElement;
+    noteDom: Phaser.GameObjects.DOMElement;
+    scriptDom: Phaser.GameObjects.DOMElement;
     controls: Phaser.GameObjects.GameObject[] = [];
     emptyText: Phaser.GameObjects.Text;
 
@@ -88,7 +90,7 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
 
         // Room
         label(66, 'ROOM');
-        const roomItems = () => EditorState.audioRooms().map((r) => ({ value: r.id, label: EditorState.roomLabel(r.id) }));
+        const roomItems = () => this.editor.audioRooms().map((r) => ({ value: r.id, label: this.editor.roomLabel(r.id) }));
         this.roomDropdown = new Dropdown(this.scene, lx, top + 49, this.w - lx, 34, roomItems, (value) => {
             this.editor.setActive(this.slot);
             this.editor.setRoom(value);
@@ -124,7 +126,7 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
             this.editor.setActive(this.slot);
             this.editor.setNote(this.noteInput.value);
         });
-        this.scene.add.dom(this.x + lx, this.y + top + 201, this.noteInput).setOrigin(0);
+        this.noteDom = this.scene.add.dom(this.x + lx, this.y + top + 201, this.noteInput).setOrigin(0);
 
         // Problems with this log
         this.problemText = this.scene.add.text(0, top + 248, '', Theme.style(15, Theme.textRed)).setLineSpacing(3).setWordWrapWidth(this.w);
@@ -142,7 +144,7 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
             this.editor.checkpoint();
         });
         this.script.addEventListener('input', () => this.scriptChanged());
-        this.scene.add.dom(this.x, this.y + sy, this.script).setOrigin(0);
+        this.scriptDom = this.scene.add.dom(this.x, this.y + sy, this.script).setOrigin(0);
 
         this.parseText = this.scene.add.text(0, sy + EditorLogForm.scriptH + 6, '', Theme.style(14, Theme.textRed)).setWordWrapWidth(this.w);
         this.add(this.parseText);
@@ -153,7 +155,8 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
         this.controls = this.list.filter((o) => o !== this.emptyText && o !== this.header && o !== this.headerText && o !== headerZone);
 
         this.editor.on("selectionChanged", () => this.refresh(true));
-        this.editor.on("logsChanged", (source: string) => this.refresh(source !== 'script' + this.slot));
+        this.editor.on("tabChanged", () => this.refresh(false));
+        this.editor.on("dataChanged", (source: string) => this.refresh(source !== 'script' + this.slot));
         this.refresh(true);
         this.scene.add.existing(this);
     }
@@ -174,7 +177,7 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
         if (!log) {
             return;
         }
-        const { entries, errors } = EditorState.parseScript(this.script.value, log.entries);
+        const { entries, errors } = this.editor.parseScript(this.script.value, log.entries);
         this.parseText.setText(errors.length ? errors[0] + (errors.length > 1 ? '  (+' + (errors.length - 1) + ' more)' : '') : '');
         this.script.style.borderColor = errors.length ? Theme.textRed : '#555555';
         this.editor.setEntries(entries, this.slot);
@@ -191,15 +194,18 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
 
         this.controls.forEach((o) => (o as unknown as Phaser.GameObjects.Components.Visible).setVisible(!!log));
         this.emptyText.setVisible(!log);
-        this.noteInput.style.display = log ? '' : 'none';
-        this.script.style.display = log ? '' : 'none';
+        // The HTML inputs sit above the canvas, outside this container, so they are hidden by hand on the other tabs.
+        // (Phaser resets style.display every frame, so it's the DOM game objects that are hidden.)
+        const inputsShown = !!log && this.editor.tab === 'logs';
+        this.noteDom.setVisible(inputsShown);
+        this.scriptDom.setVisible(inputsShown);
         if (!log) {
             return;
         }
         this.idField.value = log.id;
         this.idField.redraw();
         this.batchText.setText(String(log.batch));
-        this.roomDropdown.setText(EditorState.roomLabel(log.room));
+        this.roomDropdown.setText(this.editor.roomLabel(log.room));
         this.timeText.setText(Clock.format(log.timestamp));
         this.durationText.setText(log.duration + 'm');
         this.endText.setText('ends ' + Clock.format(log.timestamp + log.duration));
@@ -212,7 +218,7 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
         this.problemText.setColor(problems.length ? Theme.textRed : Theme.textGreen);
         if (fromData) {
             this.noteInput.value = log.note ?? '';
-            this.script.value = EditorState.toScript(log.entries);
+            this.script.value = this.editor.toScript(log.entries);
             this.script.style.borderColor = '#555555';
             this.parseText.setText('');
         }

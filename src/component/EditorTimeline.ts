@@ -38,7 +38,7 @@ export class EditorTimeline extends Phaser.GameObjects.Container {
     }
 
     get rooms() {
-        return EditorState.audioRooms();
+        return this.editor.audioRooms();
     }
 
     get colW(): number {
@@ -57,23 +57,15 @@ export class EditorTimeline extends Phaser.GameObjects.Container {
         this.zone = this.scene.add.zone(left, top, this.w - left, this.h - top).setOrigin(0).setInteractive();
         this.add([this.g, this.labels, this.zone]);
 
-        // Fixed labels: hours down the left, room IDs and writer names across the top.
+        // Hours down the left. Room headers are drawn in refresh(), since rooms can be renamed.
         for (let m = 0; m <= SampleData.shiftLength; m += 60) {
             this.add(this.scene.add.text(left - 8, top + m * this.ppm, Clock.format(m), Theme.style(15, Theme.textDim)).setOrigin(1, 0.5));
         }
-        this.rooms.forEach((room, i) => {
-            const cx = left + (i + 0.5) * this.colW;
-            this.add(this.scene.add.text(cx, 4, room.id, Theme.style(16)).setOrigin(0.5, 0));
-            // Narrow columns: the first two words of the name, one per line, cut to fit.
-            const fit = Math.max(3, Math.floor((this.colW - 2) / 6));
-            const name = (room.note ?? '').split(' ').slice(0, 2).map((w) => w.slice(0, fit)).join('\n');
-            this.add(this.scene.add.text(cx, 24, name, Theme.style(10, Theme.textDim)).setOrigin(0.5, 0).setAlign('center'));
-        });
 
         this.zone.on("pointerdown", (pointer: Phaser.Input.Pointer) => this.pointerDown(pointer));
         this.scene.input.on("pointermove", (pointer: Phaser.Input.Pointer) => this.pointerMove(pointer));
         this.scene.input.on("pointerup", () => this.drag = null);
-        this.editor.on("logsChanged", () => this.refresh());
+        this.editor.on("dataChanged", () => this.refresh());
         this.editor.on("selectionChanged", () => this.refresh());
         this.refresh();
         this.scene.add.existing(this);
@@ -148,8 +140,14 @@ export class EditorTimeline extends Phaser.GameObjects.Container {
         const bodyH = this.h - top;
         const selected = this.editor.selected();
 
-        this.rooms.forEach((_room, i) => {
+        this.rooms.forEach((room, i) => {
             TimelineDraw.drawColumn(g, left + i * colW + 2, top, colW - 4, bodyH, 0, SampleData.shiftLength);
+            // Room ID and writer name across the top: the first two words of the name, one per line, cut to fit.
+            const cx = left + (i + 0.5) * colW;
+            this.labels.add(this.scene.add.text(cx, 4, room.id, Theme.style(16)).setOrigin(0.5, 0));
+            const fit = Math.max(3, Math.floor((colW - 2) / 6));
+            const name = (room.note ?? '').split(' ').slice(0, 2).map((w) => w.slice(0, fit)).join('\n');
+            this.labels.add(this.scene.add.text(cx, 24, name, Theme.style(10, Theme.textDim)).setOrigin(0.5, 0).setAlign('center'));
         });
 
         // Hours outside the active editor's log batch are greyed out.
