@@ -2,10 +2,13 @@ import { defineConfig, Plugin } from 'vite';
 import fs from 'fs';
 import path from 'path';
 
-// Dev-only: lets the log editor (?editor) save src/data/logs.json and batches.json. Not part of the production build.
+// Dev-only: lets the log editor (?editor) save src/data/logs.json, batches.json, rooms.json and badges.json.
+// Not part of the production build.
 function logEditorSave(): Plugin {
   const file = path.resolve(__dirname, 'src/data/logs.json');
   const batchesFile = path.resolve(__dirname, 'src/data/batches.json');
+  const roomsFile = path.resolve(__dirname, 'src/data/rooms.json');
+  const badgesFile = path.resolve(__dirname, 'src/data/badges.json');
   return {
     name: 'log-editor-save',
     apply: 'serve',
@@ -27,9 +30,21 @@ function logEditorSave(): Plugin {
             if (data.batches !== undefined && !Array.isArray(data.batches)) {
               throw new Error('batches must be an array');
             }
-            fs.writeFileSync(file, formatLogs(data.logs));
+            if (data.rooms !== undefined && (!Array.isArray(data.rooms.rooms) || !Array.isArray(data.rooms.corridors))) {
+              throw new Error('rooms must have rooms and corridors arrays');
+            }
+            if (data.badges !== undefined && !Array.isArray(data.badges)) {
+              throw new Error('badges must be an array');
+            }
+            fs.writeFileSync(file, formatBlocks(data.logs, 'entries'));
             if (data.batches) {
               fs.writeFileSync(batchesFile, formatBatches(data.batches));
+            }
+            if (data.rooms) {
+              fs.writeFileSync(roomsFile, formatRooms(data.rooms));
+            }
+            if (data.badges) {
+              fs.writeFileSync(badgesFile, formatBlocks(data.badges, 'moves'));
             }
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ ok: true }));
@@ -43,21 +58,32 @@ function logEditorSave(): Plugin {
   };
 }
 
-// One batch per line.
-function formatBatches(batches: Record<string, unknown>[]): string {
-  const lines = batches.map((b) => '    { ' + Object.keys(b).map((k) => JSON.stringify(k) + ': ' + JSON.stringify(b[k])).join(', ') + ' }');
-  return '[\r\n' + lines.join(',\r\n') + '\r\n]\r\n';
+// An object on one line: { "a": 1, "b": "x" }
+function oneLine(o: Record<string, unknown>): string {
+  return '{ ' + Object.keys(o).map((k) => JSON.stringify(k) + ': ' + JSON.stringify(o[k])).join(', ') + ' }';
 }
 
-// One field per line, one entry per line, so diffs of logs.json stay readable.
-function formatLogs(logs: Record<string, unknown>[]): string {
-  const blocks = logs.map((log) => {
-    const lines = Object.keys(log)
-      .filter((k) => k !== 'entries')
-      .map((k) => '        ' + JSON.stringify(k) + ': ' + JSON.stringify(log[k]));
-    const entries = (log.entries as Record<string, unknown>[] ?? []).map((e) => '            { ' + Object.keys(e)
-      .map((k) => JSON.stringify(k) + ': ' + JSON.stringify(e[k])).join(', ') + ' }');
-    lines.push('        "entries": [' + (entries.length ? '\r\n' + entries.join(',\r\n') + '\r\n        ]' : ']'));
+// One batch per line.
+function formatBatches(batches: Record<string, unknown>[]): string {
+  return '[\r\n' + batches.map((b) => '    ' + oneLine(b)).join(',\r\n') + '\r\n]\r\n';
+}
+
+// One room and one corridor per line.
+function formatRooms(data: { rooms: Record<string, unknown>[]; corridors: string[][] }): string {
+  const rooms = data.rooms.map((r) => '        ' + oneLine(r));
+  const corridors = data.corridors.map((c) => '        [' + c.map((id) => JSON.stringify(id)).join(', ') + ']');
+  return '{\r\n    "rooms": [\r\n' + rooms.join(',\r\n') + '\r\n    ],\r\n'
+    + '    "corridors": [\r\n' + corridors.join(',\r\n') + '\r\n    ]\r\n}\r\n';
+}
+
+// One field per line, and one list item per line (a log's entries, a character's moves), so diffs stay readable.
+function formatBlocks(items: Record<string, unknown>[], listKey: string): string {
+  const blocks = items.map((item) => {
+    const lines = Object.keys(item)
+      .filter((k) => k !== listKey)
+      .map((k) => '        ' + JSON.stringify(k) + ': ' + JSON.stringify(item[k]));
+    const list = (item[listKey] as Record<string, unknown>[] ?? []).map((e) => '            ' + oneLine(e));
+    lines.push('        ' + JSON.stringify(listKey) + ': [' + (list.length ? '\r\n' + list.join(',\r\n') + '\r\n        ]' : ']'));
     return '    {\r\n' + lines.join(',\r\n') + '\r\n    }';
   });
   return '[\r\n' + blocks.join(',\r\n') + '\r\n]\r\n';

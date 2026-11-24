@@ -29,8 +29,9 @@ src/
   PhaserGlobal.ts  # Exposes the global `Phaser` (the ESM build doesn't); imported first by main.ts
   scenes/          # One Phaser.Scene subclass per file (Menu, Game, End, Preload)
   component/       # Reusable GameObjects / Containers (panels, Button, TextField, Theme...)
-  data/            # Story data types and content (SampleData.ts is placeholder; logs.json, batches.json and
-                   # badges.json hold the logs, batch hours and writer badge names; the log editor edits the first two)
+  data/            # Story data types and content (SampleData.ts is placeholder). All edited with the log editor:
+                   # logs.json (logs), batches.json (batch hours), rooms.json (rooms and corridors), badges.json
+                   # (characters and their moves; Movement.ts turns moves into proximity data)
   state/           # GameState (time, placements, locks, batches, save), Clock helpers and EditorState, Settings (player prefs)
 assets/            # Images and fonts, loaded by relative path 'assets/...'
   fonts/           # .ttf fonts and bitmap fonts (.png + .xml pairs)
@@ -60,7 +61,11 @@ New scenes go in `src/scenes/`, new reusable game objects in `src/component/`.
   - `Boot` (in `main.ts`) loads only what the preloader itself needs (`DG` logo, `pixel` bitmap font), then registers the other scenes with `this.scene.add(key, Class)` and starts `PreloadScene`.
   - `PreloadScene` shows the logo/loading bar, queues all game assets in `preload()`, and starts `MenuScene` from the loader's `complete` event.
   - When adding a scene, register it in `Boot.create()` the same way.
-- **Log editor (dev only):** `yarn dev` then open `localhost:5500/?editor`. `PreloadScene` starts `LogEditorScene` instead of `MenuScene` when `import.meta.env.DEV` and the `editor` URL flag are set. It edits `src/data/logs.json` and saves it through a dev-only Vite middleware (`POST /__editor/save` in `vite.config.ts`). Edit logs there rather than by hand, so overlaps and other problems are checked. Batch hours are set there too (click a batch header in the log list for start/end −/+); they're saved to `src/data/batches.json` as clock times, and in the game the unlocked hours are the span of every batch released so far.
+- **Log editor (dev only):** `yarn dev` then open `localhost:5500/?editor` (add `&tab=rooms` or `&tab=characters` to open another tab). `PreloadScene` starts `LogEditorScene` instead of `MenuScene` when `import.meta.env.DEV` and the `editor` URL flag are set. It has three tabs and saves everything through a dev-only Vite middleware (`POST /__editor/save` in `vite.config.ts`). Edit the story data there rather than by hand, so problems are checked.
+  - **Logs** edits `src/data/logs.json`. Batch hours are set there too (click a batch header in the log list for start/end −/+); they're saved to `src/data/batches.json` as clock times, and in the game the unlocked hours are the span of every batch released so far.
+  - **Rooms** edits `src/data/rooms.json`: room IDs (renaming updates every log and move), writer names, map squares, audio/proximity sensor states and corridors. Rooms in use can't be deleted.
+  - **Characters** edits `src/data/badges.json`: badge IDs, writer names, and each character's **moves** (`{ "at": "03:15", "room": "9023" }`: they're in that room until their next move; `room: ""` = outside the building). `invisible: true` on a character hides them from the proximity sensors (no badge); `invisible` on a move overrides that until the next move (a lost or new badge). The game's proximity data (`SampleData.proximity`) is every visible stay. The whereabouts chart flags lines a character speaks in a log whose room isn't where their moves put them.
+  - Editor panels are `component/Editor*.ts`; the working copy, undo and validation are in `state/EditorState.ts`.
 - **Viewer lines:** the viewers are a fixed time grid: every minute is exactly 3 lines (`LineWrap.linesPerMinute`), so two viewers line up minute for minute. Entries wrap at `LineWrap.charsPerLine` characters (the viewer font is monospace) and player names are cut to `LineWrap.nameChars` in transcript labels. A minute that needs more than 3 lines is an authoring error: the log editor flags it and the viewer cuts the extra lines.
 - Text is drawn with the `pixel` bitmap font (`this.add.bitmapText(x, y, 'pixel', text)`); `munro` is also loaded as a web font.
 

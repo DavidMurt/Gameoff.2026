@@ -44,12 +44,12 @@ export class EditorLogList extends Phaser.GameObjects.Container {
         this.add(this.deleteButton);
 
         this.scene.input.on("wheel", (pointer: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
-            if (pointer.x >= this.x && pointer.x < this.x + this.w && pointer.y >= this.y && pointer.y < this.y + this.h) {
+            if (this.editor.tab === 'logs' && pointer.x >= this.x && pointer.x < this.x + this.w && pointer.y >= this.y && pointer.y < this.y + this.h) {
                 this.scroll = Math.max(0, this.scroll + Math.sign(dy) * 3);
                 this.refresh();
             }
         });
-        this.editor.on("logsChanged", () => this.refresh());
+        this.editor.on("dataChanged", () => this.refresh());
         this.editor.on("selectionChanged", () => this.refresh());
         this.refresh();
         this.scene.add.existing(this);

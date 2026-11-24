@@ -31,12 +31,12 @@ export class EditorPreview extends Phaser.GameObjects.Container {
         this.add([bg, this.content]);
 
         this.scene.input.on("wheel", (pointer: Phaser.Input.Pointer, _over: unknown, _dx: number, dy: number) => {
-            if (pointer.x >= this.x && pointer.x < this.x + this.w && pointer.y >= this.y && pointer.y < this.y + this.h) {
+            if (this.editor.tab === 'logs' && pointer.x >= this.x && pointer.x < this.x + this.w && pointer.y >= this.y && pointer.y < this.y + this.h) {
                 this.scroll = Math.max(0, this.scroll + Math.sign(dy) * 2);
                 this.refresh();
             }
         });
-        this.editor.on("logsChanged", () => this.refresh());
+        this.editor.on("dataChanged", () => this.refresh());
         this.editor.on("selectionChanged", () => {
             this.scroll = 0;
             this.refresh();
@@ -85,7 +85,7 @@ export class EditorPreview extends Phaser.GameObjects.Container {
             const row = byMinute.get(minute)!;
             const both = row[0].length > 0 && row[1].length > 0;
             const texts = row.map((entries, i) => entries.map((e) => {
-                const who = e.badgeId ? EditorState.badgeName(e.badgeId) + ': ' : '';
+                const who = e.badgeId ? this.editor.badgeName(e.badgeId) + ': ' : '';
                 return this.scene.add.text(colX[i] + 14, 0, who + e.text, Theme.style(15, e.badgeId ? Theme.text : Theme.textSound))
                     .setWordWrapWidth(colW - 14);
             }));
