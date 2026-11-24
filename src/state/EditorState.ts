@@ -1,4 +1,5 @@
 import { DataChecker } from "../data/DataChecker";
+import { LineWrap } from "../data/LineWrap";
 import { SampleData } from "../data/SampleData";
 import { Log, LogEntry, Room } from "../data/Types";
 import { Clock } from "./Clock";
@@ -133,6 +134,9 @@ export class EditorState extends Phaser.Events.EventEmitter {
             if (e.badgeId && !SampleData.badges.some((b) => b.id === e.badgeId)) {
                 p.push('Entry ' + (i + 1) + ' has unknown badge ' + e.badgeId);
             }
+        });
+        LineWrap.overfullMinutes(log.entries).forEach((m) => {
+            p.push('Minute ' + Clock.offset(m.offset) + ' needs ' + m.lines + ' lines (max ' + LineWrap.linesPerMinute + ')');
         });
         if (log.entries.length === 0) {
             p.push('No entries');
