@@ -22,6 +22,7 @@ export class Theme {
     static readonly incorrect = 0xff5a6a;
     static readonly checking = 0xffd166;
     static readonly block = 0x8fb6cc;
+    static readonly active = 0xffffff;
 
     static readonly text = '#dff6ff';
     static readonly textDim = '#7fb3cc';

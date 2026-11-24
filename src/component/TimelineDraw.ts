@@ -45,6 +45,11 @@ export class TimelineDraw {
         }
     }
 
+    // A bright frame around the active log, just outside its block.
+    static drawActive(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number) {
+        Glass.glowRect(g, x - 3, y - 3, w + 6, h + 6, Theme.active, 2, 1);
+    }
+
     static dashedRect(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number, color: number) {
         g.lineStyle(2, color, 1);
         const dash = 7;
