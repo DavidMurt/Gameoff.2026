@@ -2,7 +2,7 @@ import { DataChecker } from "../data/DataChecker";
 import { LineWrap } from "../data/LineWrap";
 import { Movement } from "../data/Movement";
 import { SampleData } from "../data/SampleData";
-import { BadgeDef, BatchDef, Log, LogEntry, Move, Room, SensorState, Stay } from "../data/Types";
+import { BadgeDef, BatchDef, Log, Move, Room, SensorState, Stay } from "../data/Types";
 import { Clock } from "./Clock";
 
 export type EditorTab = 'logs' | 'rooms' | 'characters';
@@ -17,9 +17,10 @@ interface Snapshot {
 // The log editor's working copy of the story data (dev only): logs, batch hours, rooms and corridors, and characters
 // with their moves. Saves to logs.json, batches.json, rooms.json and badges.json in src/data through the Vite dev server.
 // Panels listen to its events and redraw:
-//   "dataChanged" (source: 'script0' / 'script1' when that editor's entries textarea made the change),
+//   "dataChanged" (source: 'entries0' / 'entries1' when that editor's entries table made the change),
 //   "selectionChanged", "dirtyChanged", "tabChanged", "message" (text: why an action was refused)
-// Two logs can be open at once, one per editor slot (0 and 1). Most log actions apply to the active slot.
+// Two logs can be open at once: slot 0 (editor 1) is the one that gets edited; slot 1 (editor 2) is a read-only
+// reference. Log actions apply to slot 0.
 // The Rooms and Characters tabs each have one selected room / character (and move).
 export class EditorState extends Phaser.Events.EventEmitter {
     static readonly saveUrl = '/__editor/save';
@@ -36,7 +37,6 @@ export class EditorState extends Phaser.Events.EventEmitter {
     badges: BadgeDef[];
     tab: EditorTab = 'logs';
     selectedIds: (string | null)[] = [null, null];
-    active = 0;
     selectedRoom: string | null = null;
     selectedBadge: string | null = null;
     selectedMove: number | null = null;
@@ -137,16 +137,16 @@ export class EditorState extends Phaser.Events.EventEmitter {
         return [...new Set([...this.batches.map((b) => b.batch), ...this.logs.map((l) => l.batch)])].sort((a, b) => a - b);
     }
 
-    // The log open in the active slot.
+    // The log being edited (editor 1).
     get selectedId(): string | null {
-        return this.selectedIds[this.active];
+        return this.selectedIds[0];
     }
 
     set selectedId(id: string | null) {
-        this.selectedIds[this.active] = id;
+        this.selectedIds[0] = id;
     }
 
-    selected(slot = this.active): Log | undefined {
+    selected(slot = 0): Log | undefined {
         return this.logs.find((l) => l.id === this.selectedIds[slot]);
     }
 
@@ -203,6 +203,9 @@ export class EditorState extends Phaser.Events.EventEmitter {
             }
             if (e.badgeId && !this.badge(e.badgeId)) {
                 p.push('Entry ' + (i + 1) + ' has unknown badge ' + e.badgeId);
+            }
+            if (!e.blank && e.text.trim() === '') {
+                p.push('Entry ' + (i + 1) + ' at ' + Clock.offset(e.offset) + ' has no text');
             }
         });
         LineWrap.overfullMinutes(log.entries).forEach((m) => {
@@ -274,18 +277,10 @@ export class EditorState extends Phaser.Events.EventEmitter {
 
     // ---------- Selection ----------
 
-    // Opens a log in a slot (the active one by default) and makes that slot active.
-    select(id: string | null, slot = this.active) {
-        if (id !== this.selectedIds[slot] || slot !== this.active) {
+    // Opens a log in editor 1 (slot 0, to edit) or editor 2 (slot 1, read-only).
+    select(id: string | null, slot = 0) {
+        if (id !== this.selectedIds[slot]) {
             this.selectedIds[slot] = id;
-            this.active = slot;
-            this.emit("selectionChanged");
-        }
-    }
-
-    setActive(slot: number) {
-        if (slot !== this.active) {
-            this.active = slot;
             this.emit("selectionChanged");
         }
     }
@@ -352,7 +347,7 @@ export class EditorState extends Phaser.Events.EventEmitter {
     }
 
     // Applies a change to the selected log. Pass undo = false when a checkpoint was already made.
-    edit(fn: (log: Log) => void, undo = true, source = '', slot = this.active) {
+    edit(fn: (log: Log) => void, undo = true, source = '', slot = 0) {
         const log = this.selected(slot);
         if (!log) {
             return;
@@ -414,10 +409,6 @@ export class EditorState extends Phaser.Events.EventEmitter {
                 delete log.note;
             }
         });
-    }
-
-    setEntries(entries: LogEntry[], slot: number) {
-        this.edit((log) => log.entries = entries, false, 'script' + slot, slot);
     }
 
     // Moves a batch's start or end by whole hours, keeping at least an hour between them and within the shift.
@@ -818,47 +809,5 @@ export class EditorState extends Phaser.Events.EventEmitter {
             this.emit("dirtyChanged");
             return String(e);
         }
-    }
-
-    // ---------- Entry script ----------
-    // One entry per line: "offset badge text". The badge is a writer name or ID; "-" means a sound.
-
-    toScript(entries: LogEntry[]): string {
-        return entries.map((e) => {
-            const who = e.badgeId ? this.badgeName(e.badgeId) : '-';
-            return String(e.offset).padEnd(4) + ' ' + who.padEnd(10) + ' ' + e.text;
-        }).join('\n');
-    }
-
-    // Lines that can't be read are reported and left out. Formatting is kept for entries whose text is unchanged.
-    parseScript(script: string, old: LogEntry[]): { entries: LogEntry[]; errors: string[] } {
-        const entries: LogEntry[] = [];
-        const errors: string[] = [];
-        script.split(/\r?\n/).forEach((line, i) => {
-            if (line.trim() === '') {
-                return;
-            }
-            const m = line.match(/^\s*\+?(\d+)\s+(\S+)\s+(.*\S)\s*$/);
-            if (!m) {
-                errors.push('Line ' + (i + 1) + ': expected "offset badge text"');
-                return;
-            }
-            let badgeId: string | undefined;
-            if (m[2] !== '-') {
-                badgeId = this.badgeId(m[2]);
-                if (!badgeId) {
-                    errors.push('Line ' + (i + 1) + ': unknown badge "' + m[2] + '"');
-                    return;
-                }
-            }
-            const text = m[3];
-            const entry: LogEntry = badgeId ? { offset: parseInt(m[1], 10), badgeId, text } : { offset: parseInt(m[1], 10), text };
-            const formatting = old.find((e) => e.text === text && e.formatting)?.formatting;
-            if (formatting) {
-                entry.formatting = formatting;
-            }
-            entries.push(entry);
-        });
-        return { entries, errors };
     }
 }

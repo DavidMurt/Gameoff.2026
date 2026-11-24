@@ -86,7 +86,8 @@ export class EditorPreview extends Phaser.GameObjects.Container {
             const both = row[0].length > 0 && row[1].length > 0;
             const texts = row.map((entries, i) => entries.map((e) => {
                 const who = e.badgeId ? this.editor.badgeName(e.badgeId) + ': ' : '';
-                return this.scene.add.text(colX[i] + 14, 0, who + e.text, Theme.style(15, e.badgeId ? Theme.text : Theme.textSound))
+                const color = e.blank ? Theme.textDim : (e.badgeId ? Theme.text : Theme.textSound);
+                return this.scene.add.text(colX[i] + 14, 0, e.blank ? '(blank line)' : who + e.text, Theme.style(15, color))
                     .setWordWrapWidth(colW - 14);
             }));
             const heights = texts.map((list) => list.reduce((sum, t) => sum + t.height + 2, 0));

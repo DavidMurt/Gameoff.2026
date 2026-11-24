@@ -12,8 +12,8 @@ interface Drag {
 }
 
 // Log editor: one column per audio room across the whole shift. Overlaps are filled red.
-// Left-click a block to open it in editor 1, right-click for editor 2. Drag it to change room and time.
-// Double-click an empty slot for a new log (in the editor of the button used).
+// Left-click a block to open it in editor 1, right-click for editor 2 (read-only). Drag editor 1's log to change room and time.
+// Double-click an empty slot for a new log (opened in editor 1).
 export class EditorTimeline extends Phaser.GameObjects.Container {
     static readonly labelW = 54;
     static readonly headerH = 56;
@@ -93,7 +93,6 @@ export class EditorTimeline extends Phaser.GameObjects.Container {
         const slotMinute = Math.floor(minute / 15) * 15;
         const now = pointer.downTime;
         if (now - this.lastClick.time < EditorTimeline.doubleClickMs && this.lastClick.room === room && this.lastClick.minute === slotMinute) {
-            this.editor.setActive(slot);
             this.editor.newLog(room, slotMinute);
             this.lastClick.time = 0;
             return;
@@ -150,7 +149,7 @@ export class EditorTimeline extends Phaser.GameObjects.Container {
             this.labels.add(this.scene.add.text(cx, 24, name, Theme.style(10, Theme.textDim)).setOrigin(0.5, 0).setAlign('center'));
         });
 
-        // Hours outside the active editor's log batch are greyed out.
+        // Hours outside editor 1's log batch are greyed out.
         const range = selected ? this.editor.batchRange(selected.batch) : null;
         if (range) {
             g.fillStyle(Theme.background, 0.6);
@@ -191,13 +190,13 @@ export class EditorTimeline extends Phaser.GameObjects.Container {
             });
         });
 
-        // Each open log gets an outline in its editor's colour; the active editor's is thicker.
+        // Each open log gets an outline in its editor's colour; the edited one (editor 1) is thicker.
         this.editor.selectedIds.forEach((_id, slot) => {
             const log = this.editor.selected(slot);
             const r = log ? blockRect(log) : null;
             if (r) {
                 const pad = slot === 1 && log!.id === this.editor.selectedIds[0] ? 7 : 3;
-                g.lineStyle(slot === this.editor.active ? 4 : 2, Theme.viewerColors[slot], 1);
+                g.lineStyle(slot === 0 ? 4 : 2, Theme.viewerColors[slot], 1);
                 g.strokeRect(r.x - pad, r.y - pad, r.w + pad * 2, r.h + pad * 2);
             }
         });

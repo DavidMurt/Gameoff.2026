@@ -51,6 +51,9 @@ export class LineWrap {
     }
 
     static entryLines(entry: LogEntry, name = ''): WrappedLine[] {
+        if (entry.blank) {
+            return [{ text: '', sound: false }];
+        }
         const text = entry.badgeId ? LineWrap.label(entry.badgeId, name) + ' ' + entry.text : entry.text;
         return LineWrap.wrap(text).map((t) => ({ text: t, sound: !entry.badgeId }));
     }
