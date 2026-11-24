@@ -31,7 +31,7 @@ src/
   component/       # Reusable GameObjects / Containers (panels, Button, TextField, Theme...)
   data/            # Story data types and content (SampleData.ts is placeholder; logs.json, batches.json and
                    # badges.json hold the logs, batch hours and writer badge names; the log editor edits the first two)
-  state/           # GameState (time, placements, locks, batches, save), Clock helpers and EditorState, Settings (player prefs)
+  state/           # GameState (time, placements, locks, batches, active room/log, save), Clock helpers and EditorState, Settings (player prefs)
 assets/            # Images and fonts, loaded by relative path 'assets/...'
   fonts/           # .ttf fonts and bitmap fonts (.png + .xml pairs)
 docs/              # Design references (not loaded by the game)
