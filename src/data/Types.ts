@@ -20,6 +20,7 @@ export interface LogEntry {
 
 export interface Log {
     id: string;
+    note?: string;          // writer-only note, never shown to the player
     batch: number;          // which batch it arrives in
     room: string;           // the correct room ID (hidden from the player)
     timestamp: number;      // the correct start time; always a multiple of 15 (hidden from the player)
@@ -56,6 +57,12 @@ export interface Room {
     row: number;
     audio: SensorState;
     proximity: SensorState;
+    note?: string;          // writer-only room name, never shown to the player
+}
+
+export interface BadgeDef {
+    id: string;
+    note: string;           // writer-only name, never shown to the player
 }
 
 export interface ProximitySpan {

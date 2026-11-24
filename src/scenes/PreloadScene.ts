@@ -35,7 +35,9 @@ export class PreloadScene extends Phaser.Scene {
             this.loadingBar.scaleX = value;
         });
         this.load.on("complete", () => {
-            this.scene.start("MenuScene");
+            // Dev builds only: localhost:5500/?editor opens the log editor.
+            const editor = import.meta.env.DEV && new URLSearchParams(location.search).has('editor');
+            this.scene.start(editor ? "LogEditorScene" : "MenuScene");
         });
 
         // Load the game assets here.

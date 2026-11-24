@@ -1,0 +1,99 @@
+[
+    {
+        "id": "5",
+        "note": "Security office, 04:15. Raymond's end of the radio call, then Danny comes in.",
+        "batch": 1,
+        "room": "5530",
+        "timestamp": 315,
+        "duration": 30,
+        "entries": [
+            { "offset": 0, "badgeId": "4553", "text": "Webb, Okafor. Come in, over." },
+            { "offset": 0, "text": "[RADIO CHIRP]" },
+            { "offset": 1, "badgeId": "9135", "text": "Yeah, Ray, I'm here. Go ahead." },
+            { "offset": 2, "badgeId": "4553", "text": "Status on the system. Over." },
+            { "offset": 3, "badgeId": "9135", "text": "It's a mess. The box is down hard. Video's toast, user logs wiped. Classic." },
+            { "offset": 4, "badgeId": "4553", "text": "Say again? Wiped? Over." },
+            { "offset": 5, "badgeId": "9135", "text": "Wiped. Badge-to-name tables, gone. All I've got is the emergency console." },
+            { "offset": 7, "badgeId": "4553", "text": "Copy. I'm in the security office. Door panels still show lockdown. Over." },
+            { "offset": 8, "badgeId": "9135", "text": "Yeah, that's not me. Lockdown's on a separate loop." },
+            { "offset": 10, "badgeId": "4553", "text": "Understood. Okafor out." },
+            { "offset": 10, "text": "[RADIO CHIRP]" },
+            { "offset": 12, "badgeId": "4553", "text": "Where is Kowalski." },
+            { "offset": 14, "text": "[DOOR BUZZER]" },
+            { "offset": 15, "badgeId": "2210", "text": "Ray! Dude, it's like an oven out there." },
+            { "offset": 16, "badgeId": "4553", "text": "You're late. Report." },
+            { "offset": 17, "badgeId": "2210", "text": "Yeah, yeah. Checked the doors. Front entrance won't budge. No way anyone's getting out." },
+            { "offset": 19, "badgeId": "4553", "text": "Anyone moving around without a badge?" },
+            { "offset": 20, "badgeId": "2210", "text": "Nah. Just us, the eggheads, and the cleaners. Bev's got coffee on." },
+            { "offset": 23, "badgeId": "4553", "text": "Stay by your radio." },
+            { "offset": 24, "badgeId": "2210", "text": "It's fine, it's fine. I'm not going anywhere. Literally." },
+            { "offset": 27, "text": "[CHAIR CREAKS]" }
+        ]
+    },
+    {
+        "id": "2",
+        "note": "Server room, 04:15. Marcus's end of the same radio call.",
+        "batch": 1,
+        "room": "7208",
+        "timestamp": 315,
+        "duration": 15,
+        "entries": [
+            { "offset": 0, "text": "[SERVER FANS]" },
+            { "offset": 0, "badgeId": "4553", "text": "Webb, Okafor. Come in, over." },
+            { "offset": 1, "badgeId": "9135", "text": "Yeah, Ray, I'm here. Go ahead." },
+            { "offset": 2, "badgeId": "4553", "text": "Status on the system. Over." },
+            { "offset": 3, "badgeId": "9135", "text": "It's a mess. The box is down hard. Video's toast, user logs wiped. Classic." },
+            { "offset": 4, "badgeId": "4553", "text": "Say again? Wiped? Over." },
+            { "offset": 5, "badgeId": "9135", "text": "Wiped. Badge-to-name tables, gone. All I've got is the emergency console." },
+            { "offset": 7, "badgeId": "4553", "text": "Copy. I'm in the security office. Door panels still show lockdown. Over." },
+            { "offset": 8, "badgeId": "9135", "text": "Yeah, that's not me. Lockdown's on a separate loop." },
+            { "offset": 10, "badgeId": "4553", "text": "Understood. Okafor out." },
+            { "offset": 11, "badgeId": "9135", "text": "\"Okafor out.\" Love that guy." },
+            { "offset": 12, "badgeId": "9135", "text": "Okay, box. Talk to me. Why don't I remember rebooting you?" },
+            { "offset": 13, "text": "[KEYBOARD TYPING]" },
+            { "offset": 14, "badgeId": "9135", "text": "Have you tried turning it off and on again? ...Apparently I did." }
+        ]
+    },
+    {
+        "id": "3",
+        "note": "Kitchen, 04:30. The cleaners on a coffee break.",
+        "batch": 1,
+        "room": "9023",
+        "timestamp": 330,
+        "duration": 15,
+        "entries": [
+            { "offset": 0, "text": "[COFFEE MACHINE BEEPING]" },
+            { "offset": 0, "badgeId": "1946", "text": "There we go, love. Fresh pot. Best thing in this whole kitchen, that machine." },
+            { "offset": 1, "badgeId": "8817", "text": "Mm." },
+            { "offset": 2, "badgeId": "1946", "text": "Is it me or is it boiling in here? Half past four in the morning and I'm melting." },
+            { "offset": 3, "badgeId": "8817", "text": "Air's off. Since the clunk." },
+            { "offset": 4, "badgeId": "1946", "text": "Don't tell anyone I told you, but Gus has been swearing at that air system all night." },
+            { "offset": 6, "badgeId": "8817", "text": "Not my business." },
+            { "offset": 7, "badgeId": "1946", "text": "Ray was on the radio before, sounded right put out, sweetheart." },
+            { "offset": 9, "badgeId": "8817", "text": "I saw Danny. He was late." },
+            { "offset": 11, "badgeId": "1946", "text": "That boy. Pour him a cup, pet, he'll need it." },
+            { "offset": 12, "text": "[CUPBOARD DOOR]" },
+            { "offset": 13, "badgeId": "8817", "text": "He's in security." },
+            { "offset": 14, "badgeId": "1946", "text": "Then I'll take it over to him." }
+        ]
+    },
+    {
+        "id": "4",
+        "note": "Offices, 03:15. The director on the phone.",
+        "batch": 2,
+        "room": "1385",
+        "timestamp": 255,
+        "duration": 15,
+        "entries": [
+            { "offset": 0, "badgeId": "2468", "text": "Yes. Yes, I understand." },
+            { "offset": 1, "badgeId": "2468", "text": "Let's not get ahead of ourselves. The situation is contained." },
+            { "offset": 3, "badgeId": "2468", "text": "No, the item is secure. I've been assured of that." },
+            { "offset": 5, "text": "[PHONE STATIC]" },
+            { "offset": 6, "badgeId": "2468", "text": "Sorry, you're breaking up. The lockdown is still active, yes." },
+            { "offset": 8, "badgeId": "2468", "text": "I'll handle it. I'm in my office, I can call you back on this line." },
+            { "offset": 10, "badgeId": "2468", "text": "It's twenty-five past three. I'll call again at four." },
+            { "offset": 12, "text": "[PHONE HANGS UP]" },
+            { "offset": 13, "badgeId": "2468", "text": "That's above your clearance, Richard. Above everyone's." }
+        ]
+    }
+]

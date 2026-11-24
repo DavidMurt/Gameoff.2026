@@ -29,8 +29,9 @@ src/
   PhaserGlobal.ts  # Exposes the global `Phaser` (the ESM build doesn't); imported first by main.ts
   scenes/          # One Phaser.Scene subclass per file (Menu, Game, End, Preload)
   component/       # Reusable GameObjects / Containers (panels, Button, TextField, Theme...)
-  data/            # Story data types and content (SampleData.ts is placeholder)
-  state/           # GameState (time, placements, locks, batches, save) and Clock helpers
+  data/            # Story data types and content (SampleData.ts is placeholder; logs.json and
+                   # badges.json hold the logs and writer badge names, edited with the log editor)
+  state/           # GameState (time, placements, locks, batches, save), Clock helpers and EditorState
 assets/            # Images and fonts, loaded by relative path 'assets/...'
   fonts/           # .ttf fonts and bitmap fonts (.png + .xml pairs)
 docs/              # Design references (not loaded by the game)
@@ -56,6 +57,7 @@ New scenes go in `src/scenes/`, new reusable game objects in `src/component/`.
   - `Boot` (in `main.ts`) loads only what the preloader itself needs (`DG` logo, `pixel` bitmap font), then registers the other scenes with `this.scene.add(key, Class)` and starts `PreloadScene`.
   - `PreloadScene` shows the logo/loading bar, queues all game assets in `preload()`, and starts `MenuScene` from the loader's `complete` event.
   - When adding a scene, register it in `Boot.create()` the same way.
+- **Log editor (dev only):** `yarn dev` then open `localhost:5500/?editor`. `PreloadScene` starts `LogEditorScene` instead of `MenuScene` when `import.meta.env.DEV` and the `editor` URL flag are set. It edits `src/data/logs.json` and saves it through a dev-only Vite middleware (`POST /__editor/save` in `vite.config.ts`). Edit logs there rather than by hand, so overlaps and other problems are checked.
 - Text is drawn with the `pixel` bitmap font (`this.add.bitmapText(x, y, 'pixel', text)`); `munro` is also loaded as a web font.
 
 ## Coding conventions
