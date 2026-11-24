@@ -56,9 +56,11 @@ export class EditorEntryGrid extends Phaser.GameObjects.DOMElement {
     create(w: number, h: number) {
         const root = this.node as HTMLDivElement;
         // Phaser sets display:block on its DOM element every frame, so the layout uses fixed heights, not flexbox.
+        // position:absolute is Phaser's own setting, restored here because cssText replaces it; without it, each
+        // table would sit below the one before it.
         const headH = 22;
         root.dataset.entryGrid = String(this.slot);
-        root.style.cssText = 'box-sizing:border-box;width:' + w + 'px;height:' + h + 'px;overflow:hidden;'
+        root.style.cssText = 'position:absolute;box-sizing:border-box;width:' + w + 'px;height:' + h + 'px;overflow:hidden;'
             + 'background:#101010;border:2px solid #555555;font-family:Consolas,"Courier New",monospace;';
         const head = document.createElement('div');
         head.style.cssText = 'box-sizing:border-box;height:' + headH + 'px;display:flex;gap:4px;padding:3px 4px;color:' + Theme.textDim
