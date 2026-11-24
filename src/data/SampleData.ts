@@ -1,5 +1,6 @@
 import { BatchDef, BadgeDef, Log, ProximitySpan, Room } from "./Types";
 import badgesJson from "./badges.json";
+import batchesJson from "./batches.json";
 import logsJson from "./logs.json";
 
 // PLACEHOLDER CONTENT - not the final story.
@@ -28,10 +29,21 @@ export class SampleData {
 
     static readonly badges: BadgeDef[] = badgesJson as BadgeDef[];
 
-    static readonly batches: BatchDef[] = [
-        { batch: 1, firstHour: 6, lastHour: 6 },
-        { batch: 2, firstHour: 5, lastHour: 7 }
-    ];
+    // Each batch's hours as clock times, edited in the log editor (batches.json).
+    static readonly batches: BatchDef[] = batchesJson as BatchDef[];
+
+    // A clock time "HH:MM" as minutes from the start of the shift.
+    static toShiftMinutes(clock: string): number {
+        const [h, m] = clock.split(':').map((n) => parseInt(n, 10));
+        return ((h * 60 + m) - SampleData.shiftStartHour * 60 + 24 * 60) % (24 * 60);
+    }
+
+    // A batch's hours in shift minutes.
+    static batchRange(def: BatchDef): { start: number; end: number } {
+        const start = SampleData.toShiftMinutes(def.start);
+        const end = SampleData.toShiftMinutes(def.end);
+        return { start, end: end <= start ? end + 24 * 60 : end };
+    }
 
     // Room IDs deliberately say nothing about the room. The note is the truth (writers only, never shown).
     static readonly rooms: Room[] = [

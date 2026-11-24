@@ -134,10 +134,11 @@ export class GameState extends Phaser.Events.EventEmitter {
         return SampleData.logs.filter((l) => l.batch <= this.currentBatch);
     }
 
-    // The part of the shift that is unlocked, in minutes.
+    // The part of the shift that is unlocked, in minutes: from the earliest to the latest hour of every
+    // batch released so far, so logs placed in earlier batches stay on the timelines.
     range(): { start: number; end: number } {
-        const def = SampleData.batches.find((b) => b.batch === this.currentBatch)!;
-        return { start: (def.firstHour - 1) * 60, end: def.lastHour * 60 };
+        const ranges = SampleData.batches.filter((b) => b.batch <= this.currentBatch).map((b) => SampleData.batchRange(b));
+        return { start: Math.min(...ranges.map((r) => r.start)), end: Math.max(...ranges.map((r) => r.end)) };
     }
 
     // ---------- System time ----------

@@ -1,4 +1,5 @@
 import { SampleData } from "../data/SampleData";
+import { Clock } from "../state/Clock";
 import { GameState } from "../state/GameState";
 import { Button } from "./Button";
 import { Glass } from "./Glass";
@@ -45,8 +46,8 @@ export class BatchBar extends Phaser.GameObjects.Container {
 
     refresh() {
         const p = this.gs.batchProgress();
-        const def = SampleData.batches.find((b) => b.batch === this.gs.currentBatch)!;
-        const hours = def.firstHour === def.lastHour ? 'HOUR ' + def.firstHour : 'HOURS ' + def.firstHour + '-' + def.lastHour;
+        const r = this.gs.range();
+        const hours = Clock.format(r.start) + '-' + Clock.format(r.end);
         const status = this.gs.finished ? 'INVESTIGATION COMPLETE' : p.done + '/' + p.total + ' COMPLETE';
         this.title.setText('BATCH ' + this.gs.currentBatch + ' of ' + SampleData.batches.length + ' · ' + hours + ' · ' + status);
         this.submit.setEnabled(!this.gs.finished);
