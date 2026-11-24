@@ -60,9 +60,35 @@ export interface Room {
     note?: string;          // writer-only room name, never shown to the player
 }
 
+// A character changes room at a clock time and stays there until their next move.
+export interface Move {
+    at: string;             // clock time "HH:MM" (shift starts 23:00)
+    room: string;           // room ID; '' = not in the building
+    invisible?: boolean;    // overrides the character's default until the next move (e.g. a lost or new badge)
+}
+
+// A character (a voice and/or a badge). Edited in the log editor's Characters tab, saved in badges.json.
 export interface BadgeDef {
     id: string;
     note: string;           // writer-only name, never shown to the player
+    invisible?: boolean;    // default: true = never shows on the proximity map (no badge)
+    moves?: Move[];         // in time order
+}
+
+// rooms.json: the facility map. Edited in the log editor's Rooms tab.
+export interface RoomsData {
+    rooms: Room[];
+    corridors: [string, string][];
+}
+
+// One stretch of time a character spends in one room (from their moves).
+export interface Stay {
+    badgeId: string;
+    room: string;
+    from: number;           // inclusive shift minute
+    to: number;             // exclusive shift minute
+    invisible: boolean;
+    move: number;           // index of the move that started it
 }
 
 export interface ProximitySpan {
