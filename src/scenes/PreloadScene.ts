@@ -42,5 +42,7 @@ export class PreloadScene extends Phaser.Scene {
 
         // Load the game assets here.
         this.load.font('munro', 'assets/fonts/munro.ttf');
+        // Variable font: one file covers weights 400-900.
+        this.load.font('orbitron', 'assets/fonts/orbitron.ttf', 'truetype', { weight: '400 900' });
     }
 }

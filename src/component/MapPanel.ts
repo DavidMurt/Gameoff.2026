@@ -46,7 +46,7 @@ export class MapPanel extends Phaser.GameObjects.Container {
     create(onSwap: () => void) {
         this.frame = this.scene.add.graphics();
         Glass.panel(this.frame, 0, 0, this.w, this.h);
-        const title = Theme.glowText(this.scene.add.text(16, 12, 'MAP', Theme.style(26)));
+        const title = Theme.glowText(this.scene.add.text(16, 12, 'MAP', Theme.titleStyle(22)));
         this.subtitle = this.scene.add.text(16, 42, '', Theme.style(15, Theme.textDim));
         const zoomIn = new Button(this.scene, this.w - 300, 12, 40, 40, '+', () => this.zoom(0.15), 24);
         const zoomOut = new Button(this.scene, this.w - 252, 12, 40, 40, '−', () => this.zoom(-0.15), 24);

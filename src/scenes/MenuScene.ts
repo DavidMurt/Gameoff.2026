@@ -21,7 +21,7 @@ export class MenuScene extends Phaser.Scene {
         new Wallpaper(this);
         const g = this.add.graphics();
         Glass.panel(g, cx - 420, cy - 330, 840, 660, 0.65, 28);
-        Theme.glowText(this.add.text(cx, cy - 250, 'NIGHT SHIFT', Theme.style(84)).setOrigin(0.5), Theme.glow, 24);
+        Theme.glowText(this.add.text(cx, cy - 250, 'NIGHT SHIFT', Theme.titleStyle(72)).setOrigin(0.5), Theme.glow, 24);
         this.add.text(cx, cy - 175, 'BASTION Recovery Mode · emergency console', Theme.style(22, Theme.textDim)).setOrigin(0.5);
         this.add.text(cx, cy - 135, 'MAIN SECURITY SUITE OFFLINE · VIDEO ARCHIVE OFFLINE', Theme.style(18, Theme.textRed)).setOrigin(0.5);
 
@@ -98,7 +98,7 @@ export class MenuScene extends Phaser.Scene {
         const cx = this.cameras.main.width / 2;
         const cy = this.cameras.main.height / 2;
         const overlay = this.openOverlay(600, 420);
-        overlay.add(this.add.text(cx, cy - 160, 'SETTINGS', Theme.style(32)).setOrigin(0.5));
+        overlay.add(this.add.text(cx, cy - 160, 'SETTINGS', Theme.titleStyle(30)).setOrigin(0.5));
         overlay.add(new Button(this, cx - 200, cy - 90, 400, 56, 'TOGGLE FULLSCREEN', () => this.scale.toggleFullscreen(), 22));
         const erase = new Button(this, cx - 200, cy - 14, 400, 56, 'ERASE SAVED GAME', () => {
             GameState.clearSave();

@@ -54,7 +54,7 @@ export class ViewerPanel extends Phaser.GameObjects.Container {
         frame.fillRect(0, 0, this.w - 24, 5);
         frame.lineStyle(1, Theme.border, 0.45);
         frame.lineBetween(0, ViewerPanel.bodyTop - 6, this.w, ViewerPanel.bodyTop - 6);
-        const title = Theme.glowText(this.scene.add.text(16, 20, 'VIEWER ' + (this.index + 1), Theme.style(26)));
+        const title = Theme.glowText(this.scene.add.text(16, 20, 'VIEWER ' + (this.index + 1), Theme.titleStyle(22)));
 
         this.dropdown = new Dropdown(this.scene, 14, 62, 196, 46,
             () => this.gs.audioRooms().map((r) => ({ value: r.id, label: this.gs.roomLabel(r.id) })),

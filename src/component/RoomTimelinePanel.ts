@@ -58,7 +58,7 @@ export class RoomTimelinePanel extends Phaser.GameObjects.Container {
     create(onSwap: () => void) {
         const frame = this.scene.add.graphics();
         Glass.panel(frame, 0, 0, this.w, this.h);
-        const title = Theme.glowText(this.scene.add.text(16, 12, 'ALL ROOMS', Theme.style(26)));
+        const title = Theme.glowText(this.scene.add.text(16, 12, 'ALL ROOMS', Theme.titleStyle(22)));
         this.leftButton = new Button(this.scene, this.w - 300, 12, 40, 40, '◀', () => this.scroll(-1), 18);
         this.rightButton = new Button(this.scene, this.w - 252, 12, 40, 40, '▶', () => this.scroll(1), 18);
         const swap = new Button(this.scene, this.w - 200, 12, 186, 40, '⇄ MAP', onSwap, 18);

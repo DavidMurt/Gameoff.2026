@@ -1,6 +1,7 @@
 // Shared colours, fonts and text styles for the emergency console GUI ("glass HUD" look).
 export class Theme {
     static readonly font = 'Consolas, "Courier New", monospace';
+    static readonly titleFont = 'orbitron, Consolas, monospace';
 
     static readonly background = 0x040814;
     static readonly backgroundCss = '#040814';
@@ -35,9 +36,17 @@ export class Theme {
         return { fontFamily: Theme.font, fontSize: size + 'px', color };
     }
 
+    // Orbitron for titles and panel headings. Body text stays monospace so columns line up.
+    static titleStyle(size: number, color: string = Theme.text): Phaser.Types.GameObjects.Text.TextStyle {
+        return { fontFamily: Theme.titleFont, fontSize: size + 'px', fontStyle: 'bold', color };
+    }
+
     // A soft neon glow for titles.
     static glowText<T extends Phaser.GameObjects.Text>(text: T, color: string = Theme.glow, blur = 12): T {
         text.setShadow(0, 0, color, blur, false, true);
+        // Pad the text canvas so the glow isn't clipped into a box, then shift back so the letters stay put.
+        text.setPadding(blur);
+        text.setPosition(text.x - blur * (1 - 2 * text.originX), text.y - blur * (1 - 2 * text.originY));
         return text;
     }
 
