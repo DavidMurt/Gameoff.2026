@@ -19,7 +19,8 @@ interface Snapshot {
 // Panels listen to its events and redraw:
 //   "dataChanged" (source: 'entries0' / 'entries1' when that editor's entries table made the change),
 //   "selectionChanged", "dirtyChanged", "tabChanged", "message" (text: why an action was refused)
-// Two logs can be open at once, one per editor slot (0 and 1). Most log actions apply to the active slot.
+// Two logs can be open at once: slot 0 (editor 1) is the one that gets edited; slot 1 (editor 2) is a read-only
+// reference. Log actions apply to slot 0.
 // The Rooms and Characters tabs each have one selected room / character (and move).
 export class EditorState extends Phaser.Events.EventEmitter {
     static readonly saveUrl = '/__editor/save';
@@ -36,7 +37,6 @@ export class EditorState extends Phaser.Events.EventEmitter {
     badges: BadgeDef[];
     tab: EditorTab = 'logs';
     selectedIds: (string | null)[] = [null, null];
-    active = 0;
     selectedRoom: string | null = null;
     selectedBadge: string | null = null;
     selectedMove: number | null = null;
@@ -137,16 +137,16 @@ export class EditorState extends Phaser.Events.EventEmitter {
         return [...new Set([...this.batches.map((b) => b.batch), ...this.logs.map((l) => l.batch)])].sort((a, b) => a - b);
     }
 
-    // The log open in the active slot.
+    // The log being edited (editor 1).
     get selectedId(): string | null {
-        return this.selectedIds[this.active];
+        return this.selectedIds[0];
     }
 
     set selectedId(id: string | null) {
-        this.selectedIds[this.active] = id;
+        this.selectedIds[0] = id;
     }
 
-    selected(slot = this.active): Log | undefined {
+    selected(slot = 0): Log | undefined {
         return this.logs.find((l) => l.id === this.selectedIds[slot]);
     }
 
@@ -277,18 +277,10 @@ export class EditorState extends Phaser.Events.EventEmitter {
 
     // ---------- Selection ----------
 
-    // Opens a log in a slot (the active one by default) and makes that slot active.
-    select(id: string | null, slot = this.active) {
-        if (id !== this.selectedIds[slot] || slot !== this.active) {
+    // Opens a log in editor 1 (slot 0, to edit) or editor 2 (slot 1, read-only).
+    select(id: string | null, slot = 0) {
+        if (id !== this.selectedIds[slot]) {
             this.selectedIds[slot] = id;
-            this.active = slot;
-            this.emit("selectionChanged");
-        }
-    }
-
-    setActive(slot: number) {
-        if (slot !== this.active) {
-            this.active = slot;
             this.emit("selectionChanged");
         }
     }
@@ -355,7 +347,7 @@ export class EditorState extends Phaser.Events.EventEmitter {
     }
 
     // Applies a change to the selected log. Pass undo = false when a checkpoint was already made.
-    edit(fn: (log: Log) => void, undo = true, source = '', slot = this.active) {
+    edit(fn: (log: Log) => void, undo = true, source = '', slot = 0) {
         const log = this.selected(slot);
         if (!log) {
             return;

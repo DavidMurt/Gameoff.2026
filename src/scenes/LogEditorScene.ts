@@ -2,6 +2,7 @@ import { EditorCharacterForm } from "../component/EditorCharacterForm";
 import { EditorList } from "../component/EditorList";
 import { EditorLogForm } from "../component/EditorLogForm";
 import { EditorLogList } from "../component/EditorLogList";
+import { EditorLogView } from "../component/EditorLogView";
 import { EditorPreview } from "../component/EditorPreview";
 import { EditorRoomForm } from "../component/EditorRoomForm";
 import { EditorRoomMap } from "../component/EditorRoomMap";
@@ -13,12 +14,12 @@ import { Theme } from "../component/Theme";
 import { EditorState, EditorTab } from "../state/EditorState";
 
 // Dev-only authoring tool for the story data. Open with localhost:5500/?editor. Three tabs:
-// LOGS: two editors side by side (left-click a log for editor 1, right-click for editor 2), with a shared preview
+// LOGS: editor 1 edits a log (left-click it), editor 2 shows another read-only (right-click it), with a shared preview
 //   that lines both logs up by clock time, and a timeline of every log by room.
 // ROOMS: the facility map: room IDs, names, map squares, sensors and corridors.
 // CHARACTERS: badge IDs, names, whether the proximity sensors see them, and where they are over the shift (moves).
-// Keys (not while typing): Ctrl+Z = undo, Ctrl+S = save. On LOGS, for the active editor's log:
-// up/down = -/+15 min (shift: 1 hour), left/right = previous/next room, Tab = switch editor, N = new log.
+// Keys (not while typing): Ctrl+Z = undo, Ctrl+S = save. On LOGS, for editor 1's log:
+// up/down = -/+15 min (shift: 1 hour), left/right = previous/next room, N = new log.
 // On CHARACTERS, for the selected move: up/down = -/+1 min (shift: 15 min).
 export class LogEditorScene extends Phaser.Scene {
     static readonly tabNames: Record<EditorTab, string> = { logs: 'LOGS', rooms: 'ROOMS', characters: 'CHARACTERS' };
@@ -101,8 +102,8 @@ export class LogEditorScene extends Phaser.Scene {
         const previewY = 80 + EditorLogForm.height;
         page.add([
             new EditorLogList(this, 20, 80, 240, height - 150, this.state),
-            new EditorLogForm(this, 280, 80, formW, this.state, 0),
-            new EditorLogForm(this, 280 + formW + 20, 80, formW, this.state, 1),
+            new EditorLogForm(this, 280, 80, formW, this.state),
+            new EditorLogView(this, 280 + formW + 20, 80, formW, this.state),
             new EditorPreview(this, 280, previewY, formW * 2 + 20, height - previewY - 20, this.state),
             new EditorTimeline(this, 1360, 80, width - 1380, height - 100, this.state)
         ]);
@@ -173,10 +174,7 @@ export class LogEditorScene extends Phaser.Scene {
 
     logsKey(event: KeyboardEvent, ctrl: boolean) {
         const log = this.state.selected();
-        if (event.key === 'Tab') {
-            event.preventDefault();
-            this.state.setActive(1 - this.state.active);
-        } else if (!ctrl && event.key.toLowerCase() === 'n') {
+        if (!ctrl && event.key.toLowerCase() === 'n') {
             this.state.newLog();
         } else if (log && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
             event.preventDefault();

@@ -18,6 +18,8 @@ interface EntryRow {
 // Enter in a text box adds a row below. Rows are re-sorted by time when focus leaves the table, so typing never
 // moves the row you're on. Changes go through EditorState.edit() with source 'entries' + slot, so this table
 // doesn't rebuild itself (and lose focus) for its own edits.
+// readOnly: the same columns as plain text (editor 2, the reference log), with long text wrapped.
+// The rows scroll inside the table's fixed height.
 export class EditorEntryGrid extends Phaser.GameObjects.DOMElement {
     static readonly soundValue = 'sound';
     static readonly blankValue = 'blank';
@@ -32,11 +34,14 @@ export class EditorEntryGrid extends Phaser.GameObjects.DOMElement {
     rows: EntryRow[] = [];
     shownLogId: string | null = null;
     building = false;
+    readOnly: boolean;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, editor: EditorState, slot: number) {
+    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, editor: EditorState, slot: number,
+        readOnly = false) {
         super(scene, x, y, document.createElement('div'));
         this.editor = editor;
         this.slot = slot;
+        this.readOnly = readOnly;
         this.create(w, h);
     }
 
@@ -50,10 +55,14 @@ export class EditorEntryGrid extends Phaser.GameObjects.DOMElement {
 
     create(w: number, h: number) {
         const root = this.node as HTMLDivElement;
-        root.style.cssText = 'box-sizing:border-box;width:' + w + 'px;height:' + h + 'px;display:flex;flex-direction:column;'
+        // Phaser sets display:block on its DOM element every frame, so the layout uses fixed heights, not flexbox.
+        const headH = 22;
+        root.dataset.entryGrid = String(this.slot);
+        root.style.cssText = 'box-sizing:border-box;width:' + w + 'px;height:' + h + 'px;overflow:hidden;'
             + 'background:#101010;border:2px solid #555555;font-family:Consolas,"Courier New",monospace;';
         const head = document.createElement('div');
-        head.style.cssText = 'display:flex;gap:4px;padding:3px 4px;color:' + Theme.textDim + ';font-size:13px;border-bottom:1px solid #333;';
+        head.style.cssText = 'box-sizing:border-box;height:' + headH + 'px;display:flex;gap:4px;padding:3px 4px;color:' + Theme.textDim
+            + ';font-size:13px;border-bottom:1px solid #333;';
         [['TIME', 62], ['+MIN', 46], ['SPEAKER', 132], ['TEXT', 0]].forEach(([text, width]) => {
             const span = document.createElement('span');
             span.textContent = text as string;
@@ -61,10 +70,10 @@ export class EditorEntryGrid extends Phaser.GameObjects.DOMElement {
             head.appendChild(span);
         });
         this.list = document.createElement('div');
-        this.list.style.cssText = 'flex:1;overflow-y:auto;padding:2px 4px;';
+        // The rows scroll inside the space under the header, rather than spilling out below the table.
+        this.list.style.cssText = 'box-sizing:border-box;height:' + (h - 4 - headH) + 'px;overflow-y:auto;padding:2px 4px;';
         root.append(head, this.list);
 
-        root.addEventListener('focusin', () => this.editor.setActive(this.slot));
         // Re-sort by time once focus leaves the table.
         root.addEventListener('focusout', (event) => {
             if (!this.building && !root.contains(event.relatedTarget as Node | null)) {
@@ -96,10 +105,14 @@ export class EditorEntryGrid extends Phaser.GameObjects.DOMElement {
     build() {
         this.building = true;
         const log = this.log;
+        // Keep the scroll position when the same log is redrawn.
+        const scroll = (log?.id ?? null) === this.shownLogId ? this.list.scrollTop : 0;
         this.shownLogId = log?.id ?? null;
         this.list.replaceChildren();
         this.rows = [];
-        if (log) {
+        if (log && this.readOnly) {
+            log.entries.forEach((e) => this.makeReadRow(log, e));
+        } else if (log) {
             log.entries.forEach((_e, i) => this.rows.push(this.makeRow(log, i)));
             const add = document.createElement('button');
             add.textContent = '+ ADD LINE';
@@ -108,7 +121,28 @@ export class EditorEntryGrid extends Phaser.GameObjects.DOMElement {
             this.list.appendChild(add);
             this.mark();
         }
+        this.list.scrollTop = scroll;
         this.building = false;
+    }
+
+    // A read-only row: the same columns as plain text, with the text wrapped.
+    makeReadRow(log: Log, e: LogEntry) {
+        const el = document.createElement('div');
+        el.style.cssText = 'display:flex;gap:4px;padding:3px 0;border-bottom:1px solid #222;font-size:15px;color:#e8e8e8;';
+        const cell = (text: string, css: string) => {
+            const span = document.createElement('span');
+            span.textContent = text;
+            span.style.cssText = css;
+            el.appendChild(span);
+        };
+        const past = e.offset >= log.duration;
+        cell(Clock.format(log.timestamp + e.offset), 'width:62px;flex:none;text-align:center;' + (past ? 'color:' + Theme.textRed + ';' : ''));
+        cell(String(e.offset), 'width:46px;flex:none;text-align:center;color:' + Theme.textDim + ';');
+        const who = e.blank ? '· Blank line' : (e.badgeId ? (this.editor.badge(e.badgeId)?.note ?? 'unknown') + ' ' + e.badgeId : '♪ Sound');
+        cell(who, 'width:132px;flex:none;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;'
+            + (e.badgeId ? '' : 'color:' + (e.blank ? Theme.textDim : Theme.textSound) + ';'));
+        cell(e.blank ? '' : e.text, 'flex:1;min-width:0;overflow-wrap:anywhere;' + (e.badgeId ? '' : 'color:' + Theme.textSound + ';'));
+        this.list.appendChild(el);
     }
 
     makeRow(log: Log, i: number): EntryRow {

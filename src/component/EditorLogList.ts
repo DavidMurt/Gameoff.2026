@@ -7,7 +7,7 @@ import { Theme } from "./Theme";
 
 // Log editor: every log grouped by batch, with New / Copy / Delete below. Scrolls with the mouse wheel.
 // Clicking a batch header opens rows that move the batch's start and end hours.
-// Left-click opens a log in editor 1, right-click in editor 2. Coloured bars show which editor has it open.
+// Left-click opens a log in editor 1 (to edit), right-click in editor 2 (read-only). Coloured bars show which editor has it open.
 export class EditorLogList extends Phaser.GameObjects.Container {
     static readonly rowH = 32;
     static readonly buttonH = 40;
