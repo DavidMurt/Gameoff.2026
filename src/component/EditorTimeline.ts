@@ -153,7 +153,7 @@ export class EditorTimeline extends Phaser.GameObjects.Container {
         });
 
         // Hours outside the active editor's log batch are greyed out.
-        const range = selected ? EditorState.batchRange(selected.batch) : null;
+        const range = selected ? this.editor.batchRange(selected.batch) : null;
         if (range) {
             g.fillStyle(Theme.background, 0.6);
             g.fillRect(left, top, this.w - left, range.start * ppm);

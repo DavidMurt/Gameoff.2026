@@ -5,7 +5,6 @@ import { EditorTimeline } from "../component/EditorTimeline";
 import { Button } from "../component/Button";
 import { TextField } from "../component/TextField";
 import { Theme } from "../component/Theme";
-import { SampleData } from "../data/SampleData";
 import { EditorState } from "../state/EditorState";
 
 // Dev-only authoring tool for the story logs. Open with localhost:5500/?editor.
@@ -33,7 +32,7 @@ export class LogEditorScene extends Phaser.Scene {
         this.statusText = this.add.text(260, 24, '', Theme.style(18));
 
         // Batch filter, undo and save across the top right.
-        const filters: (number | null)[] = [null, ...SampleData.batches.map((b) => b.batch)];
+        const filters: (number | null)[] = [null, ...this.state.batchNumbers()];
         let fx = 1100;
         filters.forEach((batch) => {
             const b = new Button(this, fx, 14, 80, 40, batch === null ? 'ALL' : 'B' + batch, () => {
@@ -109,7 +108,7 @@ export class LogEditorScene extends Phaser.Scene {
         this.message = 'Saving...';
         this.refreshTop();
         const error = await this.state.save();
-        this.message = error ? 'SAVE FAILED: ' + error : 'Saved to src/data/logs.json';
+        this.message = error ? 'SAVE FAILED: ' + error : 'Saved logs.json and batches.json';
         this.refreshTop();
     }
 
@@ -125,7 +124,7 @@ export class LogEditorScene extends Phaser.Scene {
         this.statusText.setText(parts.join('   ·   '));
         this.statusText.setColor(this.message.startsWith('SAVE FAILED') ? Theme.textRed : (bad || this.state.dirty ? Theme.textAmber : Theme.textGreen));
         this.saveButton.setText(this.state.dirty ? 'SAVE *' : 'SAVE');
-        const filters: (number | null)[] = [null, ...SampleData.batches.map((b) => b.batch)];
+        const filters: (number | null)[] = [null, ...this.state.batchNumbers()];
         this.filterButtons.forEach((b, i) => b.setToggled(filters[i] === this.state.batchFilter));
     }
 }

@@ -1,16 +1,17 @@
 import { DataChecker } from "../data/DataChecker";
 import { LineWrap } from "../data/LineWrap";
 import { SampleData } from "../data/SampleData";
-import { Log, LogEntry, Room } from "../data/Types";
+import { BatchDef, Log, LogEntry, Room } from "../data/Types";
 import { Clock } from "./Clock";
 
 interface Snapshot {
     logs: string;
+    batches: string;
     selectedIds: (string | null)[];
 }
 
-// The log editor's working copy of the story logs (dev only). Saves to src/data/logs.json through
-// the Vite dev server. Panels listen to its events and redraw:
+// The log editor's working copy of the story logs and batch hours (dev only). Saves to src/data/logs.json and
+// src/data/batches.json through the Vite dev server. Panels listen to its events and redraw:
 //   "logsChanged" (source: 'script0' / 'script1' when that editor's entries textarea made the change),
 //   "selectionChanged", "dirtyChanged"
 // Two logs can be open at once, one per editor slot (0 and 1). Most actions apply to the active slot.
@@ -21,6 +22,7 @@ export class EditorState extends Phaser.Events.EventEmitter {
     static readonly slots = 2;
 
     logs: Log[];
+    batches: BatchDef[];
     selectedIds: (string | null)[] = [null, null];
     active = 0;
     batchFilter: number | null = null;
@@ -30,6 +32,7 @@ export class EditorState extends Phaser.Events.EventEmitter {
     constructor() {
         super();
         this.logs = JSON.parse(JSON.stringify(SampleData.logs));
+        this.batches = JSON.parse(JSON.stringify(SampleData.batches));
         const params = new URLSearchParams(location.search);
         const wanted = [params.get('log'), params.get('log2')];
         this.selectedIds = wanted.map((id, i) => this.logs.some((l) => l.id === id) ? id : (this.logs[i]?.id ?? null));
@@ -61,10 +64,15 @@ export class EditorState extends Phaser.Events.EventEmitter {
         return SampleData.badges.find((b) => b.id === name || b.note.toLowerCase() === lower)?.id;
     }
 
-    // The unlocked part of the shift for a batch, in minutes (same as GameState.range()).
-    static batchRange(batch: number): { start: number; end: number } | null {
-        const def = SampleData.batches.find((b) => b.batch === batch);
-        return def ? { start: (def.firstHour - 1) * 60, end: def.lastHour * 60 } : null;
+    // A batch's hours in shift minutes, from the working copy.
+    batchRange(batch: number): { start: number; end: number } | null {
+        const def = this.batches.find((b) => b.batch === batch);
+        return def ? SampleData.batchRange(def) : null;
+    }
+
+    // Every batch number: the defined ones plus any a log uses.
+    batchNumbers(): number[] {
+        return [...new Set([...this.batches.map((b) => b.batch), ...this.logs.map((l) => l.batch)])].sort((a, b) => a - b);
     }
 
     // The log open in the active slot.
@@ -110,9 +118,9 @@ export class EditorState extends Phaser.Events.EventEmitter {
         if (log.timestamp < 0 || end > SampleData.shiftLength) {
             p.push('Runs outside the shift');
         }
-        const range = EditorState.batchRange(log.batch);
+        const range = this.batchRange(log.batch);
         if (!range) {
-            p.push('Batch ' + log.batch + ' is not defined in SampleData.batches');
+            p.push('Batch ' + log.batch + ' has no hours set (batches.json)');
         } else if (log.timestamp < range.start || end > range.end) {
             p.push('Outside batch ' + log.batch + ' hours (' + Clock.format(range.start) + '-' + Clock.format(range.end) + ')');
         }
@@ -175,7 +183,7 @@ export class EditorState extends Phaser.Events.EventEmitter {
 
     // Saves an undo point. Called once before each user action (or at the start of a drag or typing).
     checkpoint() {
-        this.undoStack.push({ logs: JSON.stringify(this.logs), selectedIds: [...this.selectedIds] });
+        this.undoStack.push({ logs: JSON.stringify(this.logs), batches: JSON.stringify(this.batches), selectedIds: [...this.selectedIds] });
         if (this.undoStack.length > EditorState.undoDepth) {
             this.undoStack.shift();
         }
@@ -187,6 +195,7 @@ export class EditorState extends Phaser.Events.EventEmitter {
             return;
         }
         this.logs = JSON.parse(snap.logs);
+        this.batches = JSON.parse(snap.batches);
         this.selectedIds = snap.selectedIds;
         this.changed();
         this.emit("selectionChanged");
@@ -219,7 +228,7 @@ export class EditorState extends Phaser.Events.EventEmitter {
     }
 
     setBatch(batch: number) {
-        const max = Math.max(...SampleData.batches.map((b) => b.batch));
+        const max = Math.max(...this.batches.map((b) => b.batch));
         this.edit((log) => log.batch = Phaser.Math.Clamp(batch, 1, max));
     }
 
@@ -250,6 +259,24 @@ export class EditorState extends Phaser.Events.EventEmitter {
         this.edit((log) => log.entries = entries, false, 'script' + slot, slot);
     }
 
+    // Moves a batch's start or end by whole hours, keeping at least an hour between them and within the shift.
+    setBatchTime(batch: number, which: 'start' | 'end', hours: number) {
+        const def = this.batches.find((b) => b.batch === batch);
+        if (!def) {
+            return;
+        }
+        const r = SampleData.batchRange(def);
+        const start = which === 'start' ? Phaser.Math.Clamp(r.start + hours * 60, 0, r.end - 60) : r.start;
+        const end = which === 'end' ? Phaser.Math.Clamp(r.end + hours * 60, r.start + 60, SampleData.shiftLength) : r.end;
+        if (start === r.start && end === r.end) {
+            return;
+        }
+        this.checkpoint();
+        def.start = Clock.format(start);
+        def.end = Clock.format(end);
+        this.changed();
+    }
+
     moveRoomBy(step: number) {
         const log = this.selected();
         if (!log) {
@@ -264,7 +291,7 @@ export class EditorState extends Phaser.Events.EventEmitter {
         const current = this.selected();
         const batch = this.batchFilter ?? current?.batch ?? 1;
         const roomId = room ?? current?.room ?? EditorState.audioRooms()[0].id;
-        const range = EditorState.batchRange(batch) ?? { start: 0, end: SampleData.shiftLength };
+        const range = this.batchRange(batch) ?? { start: 0, end: SampleData.shiftLength };
         let start = time;
         if (start === undefined) {
             // First free 15 minute slot in the batch's hours, else the start of the batch.
@@ -326,7 +353,7 @@ export class EditorState extends Phaser.Events.EventEmitter {
 
     // ---------- Saving ----------
 
-    // Writes logs.json. Vite reloads the page afterwards; the URL keeps the open logs.
+    // Writes logs.json and batches.json. Vite reloads the page afterwards; the URL keeps the open logs.
     // Returns an error message, or null on success.
     async save(): Promise<string | null> {
         const url = new URL(location.href);
@@ -344,7 +371,7 @@ export class EditorState extends Phaser.Events.EventEmitter {
             const res = await fetch(EditorState.saveUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ logs: this.logs })
+                body: JSON.stringify({ logs: this.logs, batches: this.batches })
             });
             const result = await res.json();
             if (!result.ok) {

@@ -47,8 +47,8 @@ export interface BatchState {
 
 export interface BatchDef {
     batch: number;
-    firstHour: number;      // first unlocked hour of the shift (1-9) once this batch is released
-    lastHour: number;       // last unlocked hour of the shift (inclusive)
+    start: string;          // clock time "HH:MM" when this batch's hours start (shift starts 23:00)
+    end: string;            // clock time "HH:MM" when they end; edited in the log editor, saved in batches.json
 }
 
 export interface Room {
