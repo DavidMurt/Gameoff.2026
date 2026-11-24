@@ -158,7 +158,7 @@ export class LogEditorScene extends Phaser.Scene {
             return;
         }
         const tag = document.activeElement?.tagName;
-        if (TextField.focused || tag === 'INPUT' || tag === 'TEXTAREA') {
+        if (TextField.focused || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
             return;
         }
         if (ctrl && event.key.toLowerCase() === 'z') {

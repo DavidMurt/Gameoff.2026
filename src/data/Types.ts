@@ -13,8 +13,9 @@ export interface TextStyle {
 
 export interface LogEntry {
     offset: number;     // minutes after the log's timestamp
-    badgeId?: string;   // missing for sound events
-    text: string;       // speech, or a sound such as "[LOUD CRASH]"
+    badgeId?: string;   // missing for sound events and blank lines
+    text: string;       // speech, or a sound such as "[LOUD CRASH]"; '' for a blank line
+    blank?: boolean;    // an empty viewer line, so the minute's next entries start lower down
     formatting?: TextStyle[]; // authored emphasis (not rendered yet)
 }
 

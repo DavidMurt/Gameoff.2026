@@ -2,17 +2,18 @@ import { Clock } from "../state/Clock";
 import { EditorState } from "../state/EditorState";
 import { Button } from "./Button";
 import { Dropdown } from "./Dropdown";
+import { EditorEntryGrid } from "./EditorEntryGrid";
 import { TextField } from "./TextField";
 import { Theme } from "./Theme";
 
 // Log editor: one editor slot showing a log's ID, batch, room, time, length, note and entries.
 // Two of these sit side by side. Clicking anything in one makes its slot the active one.
-// The note and entries are HTML inputs (for paste, selection and multiline editing); everything else is in-canvas.
+// The note and the entries table are HTML (for typing, paste and selection); everything else is in-canvas.
 export class EditorLogForm extends Phaser.GameObjects.Container {
     static readonly labelW = 90;
     static readonly headerH = 30;
-    static readonly scriptTop = 400;
-    static readonly scriptH = 220;
+    static readonly entriesTop = 400;
+    static readonly entriesH = 250;
 
     editor: EditorState;
     slot: number;
@@ -26,11 +27,9 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
     durationText: Phaser.GameObjects.Text;
     endText: Phaser.GameObjects.Text;
     problemText: Phaser.GameObjects.Text;
-    parseText: Phaser.GameObjects.Text;
     noteInput: HTMLInputElement;
-    script: HTMLTextAreaElement;
     noteDom: Phaser.GameObjects.DOMElement;
-    scriptDom: Phaser.GameObjects.DOMElement;
+    entries: EditorEntryGrid;
     controls: Phaser.GameObjects.GameObject[] = [];
     emptyText: Phaser.GameObjects.Text;
 
@@ -132,22 +131,12 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
         this.problemText = this.scene.add.text(0, top + 248, '', Theme.style(15, Theme.textRed)).setLineSpacing(3).setWordWrapWidth(this.w);
         this.add(this.problemText);
 
-        // Entries script (HTML textarea)
-        const sy = EditorLogForm.scriptTop;
-        this.add(this.scene.add.text(0, sy - 26, 'ENTRIES', Theme.style(17, Theme.textDim)));
-        this.add(this.scene.add.text(lx, sy - 24, 'offset  badge  text   (- = sound)', Theme.style(14, Theme.textDim)));
-        this.script = document.createElement('textarea');
-        this.script.spellcheck = false;
-        this.script.style.cssText = EditorLogForm.inputCss(this.w, EditorLogForm.scriptH) + 'resize:none;line-height:1.35;';
-        this.script.addEventListener('focus', () => {
-            this.editor.setActive(this.slot);
-            this.editor.checkpoint();
-        });
-        this.script.addEventListener('input', () => this.scriptChanged());
-        this.scriptDom = this.scene.add.dom(this.x, this.y + sy, this.script).setOrigin(0);
-
-        this.parseText = this.scene.add.text(0, sy + EditorLogForm.scriptH + 6, '', Theme.style(14, Theme.textRed)).setWordWrapWidth(this.w);
-        this.add(this.parseText);
+        // Entries (HTML table)
+        const ey = EditorLogForm.entriesTop;
+        this.add(this.scene.add.text(0, ey - 26, 'ENTRIES', Theme.style(17, Theme.textDim)));
+        this.add(this.scene.add.text(lx, ey - 24, 'Enter = new line · Sound / Blank line are speakers',
+            Theme.style(13, Theme.textDim)));
+        this.entries = new EditorEntryGrid(this.scene, this.x, this.y + ey, this.w, EditorLogForm.entriesH, this.editor, this.slot);
 
         this.emptyText = this.scene.add.text(0, top + 10, 'No log open. Left-click a log for editor 1,\nright-click for editor 2.',
             Theme.style(18, Theme.textDim));
@@ -156,14 +145,14 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
 
         this.editor.on("selectionChanged", () => this.refresh(true));
         this.editor.on("tabChanged", () => this.refresh(false));
-        this.editor.on("dataChanged", (source: string) => this.refresh(source !== 'script' + this.slot));
+        this.editor.on("dataChanged", () => this.refresh(false));
         this.refresh(true);
         this.scene.add.existing(this);
     }
 
     // Height of everything above the shared preview.
     static get height(): number {
-        return EditorLogForm.scriptTop + EditorLogForm.scriptH + 40;
+        return EditorLogForm.entriesTop + EditorLogForm.entriesH + 20;
     }
 
     static inputCss(w: number, h: number): string {
@@ -172,18 +161,7 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
             + 'font-family:Consolas,"Courier New",monospace;font-size:16px;';
     }
 
-    scriptChanged() {
-        const log = this.editor.selected(this.slot);
-        if (!log) {
-            return;
-        }
-        const { entries, errors } = this.editor.parseScript(this.script.value, log.entries);
-        this.parseText.setText(errors.length ? errors[0] + (errors.length > 1 ? '  (+' + (errors.length - 1) + ' more)' : '') : '');
-        this.script.style.borderColor = errors.length ? Theme.textRed : '#555555';
-        this.editor.setEntries(entries, this.slot);
-    }
-
-    // fromData: also reload the HTML inputs (skipped while this slot's textarea is the source of the change).
+    // fromData: also reload the note input (on a change of log). The entries table keeps itself up to date.
     refresh(fromData: boolean) {
         const log = this.editor.selected(this.slot);
         const active = this.editor.active === this.slot;
@@ -198,7 +176,7 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
         // (Phaser resets style.display every frame, so it's the DOM game objects that are hidden.)
         const inputsShown = !!log && this.editor.tab === 'logs';
         this.noteDom.setVisible(inputsShown);
-        this.scriptDom.setVisible(inputsShown);
+        this.entries.setVisible(inputsShown);
         if (!log) {
             return;
         }
@@ -218,9 +196,6 @@ export class EditorLogForm extends Phaser.GameObjects.Container {
         this.problemText.setColor(problems.length ? Theme.textRed : Theme.textGreen);
         if (fromData) {
             this.noteInput.value = log.note ?? '';
-            this.script.value = this.editor.toScript(log.entries);
-            this.script.style.borderColor = '#555555';
-            this.parseText.setText('');
         }
     }
 }
