@@ -3,6 +3,7 @@ import { Clock } from "../state/Clock";
 import { GameState } from "../state/GameState";
 import { Button } from "./Button";
 import { Dropdown } from "./Dropdown";
+import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 
 interface Row {
@@ -48,15 +49,12 @@ export class ViewerPanel extends Phaser.GameObjects.Container {
 
     create() {
         const frame = this.scene.add.graphics();
-        frame.fillStyle(Theme.panel, 1);
-        frame.fillRect(0, 0, this.w, this.h);
-        frame.lineStyle(3, Theme.border, 1);
-        frame.strokeRect(0, 0, this.w, this.h);
+        Glass.panel(frame, 0, 0, this.w, this.h);
         frame.fillStyle(Theme.viewerColors[this.index], 1);
-        frame.fillRect(0, 0, this.w, 8);
-        frame.lineStyle(2, Theme.border, 1);
+        frame.fillRect(0, 0, this.w - 24, 5);
+        frame.lineStyle(1, Theme.border, 0.45);
         frame.lineBetween(0, ViewerPanel.bodyTop - 6, this.w, ViewerPanel.bodyTop - 6);
-        const title = this.scene.add.text(16, 20, 'VIEWER ' + (this.index + 1), Theme.style(26));
+        const title = Theme.glowText(this.scene.add.text(16, 20, 'VIEWER ' + (this.index + 1), Theme.titleStyle(22)));
 
         this.dropdown = new Dropdown(this.scene, 14, 62, 196, 46,
             () => this.gs.audioRooms().map((r) => ({ value: r.id, label: this.gs.roomLabel(r.id) })),
@@ -213,7 +211,7 @@ export class ViewerPanel extends Phaser.GameObjects.Container {
                 const first = current[0];
                 const last = current[current.length - 1];
                 shift = mid - (first.y + last.y + last.h) / 2;
-                this.highlight.fillStyle(Theme.highlight, 1);
+                this.highlight.fillStyle(Theme.highlight, 0.55);
                 this.highlight.fillRect(4, first.y + shift - 4, this.w - 8, last.y + last.h - first.y);
             } else if (next) {
                 // Keep the log's header line below the "now" marker too.
@@ -240,7 +238,7 @@ export class ViewerPanel extends Phaser.GameObjects.Container {
         });
         if (showNowLine) {
             // Keep the "now" marker readable: the time is shown on the left of the line.
-            this.highlight.fillStyle(Theme.panel, 1);
+            this.highlight.fillStyle(Theme.background, 0.9);
             this.highlight.fillRect(18, mid - 10, 50, 20);
         }
         this.nowLabel(showNowLine, mid);

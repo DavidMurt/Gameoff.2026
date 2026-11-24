@@ -2,6 +2,7 @@ import { Log, Room } from "../data/Types";
 import { Clock } from "../state/Clock";
 import { GameState } from "../state/GameState";
 import { Button } from "./Button";
+import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 import { TimelineDraw } from "./TimelineDraw";
 
@@ -56,11 +57,8 @@ export class RoomTimelinePanel extends Phaser.GameObjects.Container {
 
     create(onSwap: () => void) {
         const frame = this.scene.add.graphics();
-        frame.fillStyle(Theme.panel, 1);
-        frame.fillRect(0, 0, this.w, this.h);
-        frame.lineStyle(3, Theme.border, 1);
-        frame.strokeRect(0, 0, this.w, this.h);
-        const title = this.scene.add.text(16, 12, 'ALL ROOMS', Theme.style(26));
+        Glass.panel(frame, 0, 0, this.w, this.h);
+        const title = Theme.glowText(this.scene.add.text(16, 12, 'ALL ROOMS', Theme.titleStyle(22)));
         this.leftButton = new Button(this.scene, this.w - 300, 12, 40, 40, '◀', () => this.scroll(-1), 18);
         this.rightButton = new Button(this.scene, this.w - 252, 12, 40, 40, '▶', () => this.scroll(1), 18);
         const swap = new Button(this.scene, this.w - 200, 12, 186, 40, '⇄ MAP', onSwap, 18);
@@ -156,9 +154,9 @@ export class RoomTimelinePanel extends Phaser.GameObjects.Container {
 
         // Unplaced column.
         const ux = this.x + RoomTimelinePanel.unplacedX;
-        g.fillStyle(Theme.panelLight, 1);
+        g.fillStyle(Theme.panelLight, 0.4);
         g.fillRect(ux, top, RoomTimelinePanel.unplacedW, this.colH);
-        g.lineStyle(2, Theme.border, 1);
+        g.lineStyle(1.5, Theme.border, 0.6);
         g.strokeRect(ux, top, RoomTimelinePanel.unplacedW, this.colH);
         this.dynamic.push(this.scene.add.text(ux, top - 30, 'UNPLACED', Theme.style(16)));
         this.dynamic.push(this.scene.add.text(ux + 6, top + this.colH - 22, 'batch ' + this.gs.currentBatch,

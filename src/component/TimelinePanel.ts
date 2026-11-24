@@ -1,5 +1,6 @@
 import { Clock } from "../state/Clock";
 import { GameState } from "../state/GameState";
+import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 import { TimelineDraw } from "./TimelineDraw";
 
@@ -31,11 +32,8 @@ export class TimelinePanel extends Phaser.GameObjects.Container {
 
     create() {
         const frame = this.scene.add.graphics();
-        frame.fillStyle(Theme.panel, 1);
-        frame.fillRect(0, 0, this.w, this.h);
-        frame.lineStyle(3, Theme.border, 1);
-        frame.strokeRect(0, 0, this.w, this.h);
-        const title = this.scene.add.text(12, 18, 'TIMELINE', Theme.style(18));
+        Glass.panel(frame, 0, 0, this.w, this.h);
+        const title = Theme.glowText(this.scene.add.text(12, 18, 'TIMELINE', Theme.titleStyle(16)));
         const footer = this.scene.add.text(10, this.h - 28, 'VIEWER 1 / 2', Theme.style(13, Theme.textDim));
         this.graphics = this.scene.add.graphics();
         this.timeG = this.scene.add.graphics();

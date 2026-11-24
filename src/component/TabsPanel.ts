@@ -2,6 +2,7 @@ import { SampleData } from "../data/SampleData";
 import { SensorState } from "../data/Types";
 import { GameState } from "../state/GameState";
 import { Button } from "./Button";
+import { Glass } from "./Glass";
 import { TextField } from "./TextField";
 import { Theme } from "./Theme";
 
@@ -37,10 +38,8 @@ export class TabsPanel extends Phaser.GameObjects.Container {
 
     create() {
         const frame = this.scene.add.graphics();
-        frame.fillStyle(Theme.panel, 1);
-        frame.fillRect(0, 0, this.w, this.h);
-        frame.lineStyle(3, Theme.border, 1);
-        frame.strokeRect(0, 0, this.w, this.h);
+        Glass.panel(frame, 0, 0, this.w, this.h);
+        frame.lineStyle(1, Theme.border, 0.45);
         frame.lineBetween(0, 54, this.w, 54);
         this.tabButtons = {
             users: new Button(this.scene, 0, 0, 170, 54, 'Users', () => this.setTab('users'), 22),

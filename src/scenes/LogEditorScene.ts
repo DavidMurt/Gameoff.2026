@@ -29,7 +29,7 @@ export class LogEditorScene extends Phaser.Scene {
         const height = this.cameras.main.height;
         this.state = new EditorState();
 
-        this.add.text(20, 18, 'LOG EDITOR', Theme.style(28, Theme.textAmber));
+        this.add.text(20, 18, 'LOG EDITOR', Theme.titleStyle(24, Theme.textAmber));
         this.statusText = this.add.text(260, 24, '', Theme.style(18));
 
         // Batch filter, undo and save across the top right.

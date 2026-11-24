@@ -35,7 +35,7 @@ window.addEventListener('load', function () {
     const game = new Phaser.Game({
         width: 1920,
         height: 1080,
-        backgroundColor: "#2f2f2f",
+        backgroundColor: "#040814",
         parent: "game-container",
         dom: { createContainer: true },
         scale: {

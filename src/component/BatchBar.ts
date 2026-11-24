@@ -1,6 +1,7 @@
 import { SampleData } from "../data/SampleData";
 import { GameState } from "../state/GameState";
 import { Button } from "./Button";
+import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 
 // Top bar: batch progress, batch submission (hash), save and menu.
@@ -23,10 +24,7 @@ export class BatchBar extends Phaser.GameObjects.Container {
 
     create(onMenu: () => void) {
         const frame = this.scene.add.graphics();
-        frame.fillStyle(Theme.panel, 1);
-        frame.fillRect(0, 0, this.w, this.h);
-        frame.lineStyle(3, Theme.border, 1);
-        frame.strokeRect(0, 0, this.w, this.h);
+        Glass.panel(frame, 0, 0, this.w, this.h);
         this.title = this.scene.add.text(14, 7, '', Theme.style(20));
         this.message = this.scene.add.text(14, 33, '', Theme.style(14, Theme.textDim));
         this.submit = new Button(this.scene, this.w - 378, 8, 180, this.h - 16, 'SUBMIT BATCH', () => this.onSubmit(), 17);

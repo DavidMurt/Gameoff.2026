@@ -1,5 +1,7 @@
 import { Button } from "../component/Button";
+import { Glass } from "../component/Glass";
 import { Theme } from "../component/Theme";
+import { Wallpaper } from "../component/Wallpaper";
 import { Clock } from "../state/Clock";
 import { GameState } from "../state/GameState";
 
@@ -13,7 +15,9 @@ export class EndScene extends Phaser.Scene {
     create() {
         const state = this.registry.get('state') as GameState;
         const cx = this.cameras.main.width / 2;
-        this.add.text(cx, 90, 'INVESTIGATION COMPLETE', Theme.style(56)).setOrigin(0.5);
+        new Wallpaper(this);
+        Glass.panel(this.add.graphics(), 120, 40, this.cameras.main.width - 240, 1000, 0.7, 28);
+        Theme.glowText(this.add.text(cx, 90, 'INVESTIGATION COMPLETE', Theme.titleStyle(48)).setOrigin(0.5), Theme.glow, 20);
         this.add.text(cx, 150, 'Every log has been placed. The night, as reconstructed:', Theme.style(22, Theme.textDim)).setOrigin(0.5);
 
         const logs = state.releasedLogs().slice().sort((a, b) =>

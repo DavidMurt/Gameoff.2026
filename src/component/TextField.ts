@@ -106,7 +106,7 @@ export class TextField extends Phaser.GameObjects.Container {
         const editing = TextField.focused === this;
         this.bg.clear();
         if (editing) {
-            this.bg.fillStyle(Theme.panelLight, 1);
+            this.bg.fillStyle(Theme.panelLight, 0.8);
             this.bg.fillRect(0, 0, this.w, this.h);
             this.bg.lineStyle(2, Theme.systemTime, 1);
             this.bg.strokeRect(0, 0, this.w, this.h);

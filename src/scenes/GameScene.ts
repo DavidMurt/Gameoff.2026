@@ -4,6 +4,7 @@ import { RoomTimelinePanel } from "../component/RoomTimelinePanel";
 import { TabsPanel } from "../component/TabsPanel";
 import { TimelinePanel } from "../component/TimelinePanel";
 import { ViewerPanel } from "../component/ViewerPanel";
+import { Wallpaper } from "../component/Wallpaper";
 import { GameState } from "../state/GameState";
 
 // The investigation screen: map / all-rooms panel, two viewers and the timeline, all bound to system time.
@@ -17,6 +18,7 @@ export class GameScene extends Phaser.Scene {
     create() {
         this.gs = this.registry.get('state') as GameState;
         this.input.mouse?.disableContextMenu();
+        new Wallpaper(this);
 
         const margin = 16;
         const height = this.cameras.main.height - margin * 2;

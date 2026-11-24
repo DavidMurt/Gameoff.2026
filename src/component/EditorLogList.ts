@@ -2,6 +2,7 @@ import { Log } from "../data/Types";
 import { Clock } from "../state/Clock";
 import { EditorState } from "../state/EditorState";
 import { Button } from "./Button";
+import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 
 // Log editor: every log grouped by batch, with New / Copy / Delete below. Scrolls with the mouse wheel.
@@ -29,10 +30,7 @@ export class EditorLogList extends Phaser.GameObjects.Container {
 
     create() {
         this.bg = this.scene.add.graphics();
-        this.bg.fillStyle(Theme.panel, 1);
-        this.bg.fillRect(0, 0, this.w, this.h);
-        this.bg.lineStyle(2, Theme.border, 1);
-        this.bg.strokeRect(0, 0, this.w, this.h);
+        Glass.panel(this.bg, 0, 0, this.w, this.h);
         this.rows = this.scene.add.container(0, 0);
         this.add([this.bg, this.rows]);
 

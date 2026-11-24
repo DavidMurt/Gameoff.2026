@@ -1,4 +1,5 @@
 import { Button } from "./Button";
+import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 
 export interface DropdownItem {
@@ -52,10 +53,9 @@ export class Dropdown extends Phaser.GameObjects.Container {
         blocker.on("pointerdown", () => this.close());
         this.menu.add(blocker);
         const bg = this.scene.add.graphics();
-        bg.fillStyle(Theme.panelLight, 1);
+        bg.fillStyle(Theme.background, 0.92);
         bg.fillRect(0, 0, this.w, rowH * items.length);
-        bg.lineStyle(2, Theme.border, 1);
-        bg.strokeRect(0, 0, this.w, rowH * items.length);
+        Glass.glowRect(bg, 0, 0, this.w, rowH * items.length, Theme.border);
         this.menu.add(bg);
         items.forEach((item, i) => {
             const row = new Button(this.scene, 0, i * rowH, this.w, rowH, item.label, () => {

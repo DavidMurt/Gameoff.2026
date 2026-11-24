@@ -1,4 +1,5 @@
 import { GameState } from "../state/GameState";
+import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 
 // Drawing helpers shared by the room/timeline panel and the timeline panel.
@@ -7,14 +8,14 @@ export class TimelineDraw {
     static drawColumn(g: Phaser.GameObjects.Graphics, x: number, top: number, w: number, h: number,
         start: number, end: number) {
         const ppm = h / (end - start);
-        g.fillStyle(Theme.panel, 1);
+        g.fillStyle(Theme.panelLight, 0.3);
         g.fillRect(x, top, w, h);
         for (let m = start; m <= end; m += 15) {
             const y = top + (m - start) * ppm;
-            g.lineStyle(1, m % 60 === 0 ? Theme.gridHour : Theme.grid, 1);
+            g.lineStyle(1, m % 60 === 0 ? Theme.gridHour : Theme.grid, 0.8);
             g.lineBetween(x, y, x + w, y);
         }
-        g.lineStyle(2, Theme.border, 1);
+        g.lineStyle(1.5, Theme.border, 0.5);
         g.strokeRect(x, top, w, h);
     }
 
@@ -35,11 +36,10 @@ export class TimelineDraw {
     // Solid when both locks are set, dashed otherwise.
     static drawBlock(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number,
         color: number, solid: boolean) {
-        g.fillStyle(color, 0.2);
+        g.fillStyle(color, 0.25);
         g.fillRect(x, y, w, h);
         if (solid) {
-            g.lineStyle(3, color, 1);
-            g.strokeRect(x, y, w, h);
+            Glass.glowRect(g, x, y, w, h, color, 3, 1);
         } else {
             TimelineDraw.dashedRect(g, x, y, w, h, color);
         }
@@ -65,6 +65,8 @@ export class TimelineDraw {
     }
 
     static drawTimeLine(g: Phaser.GameObjects.Graphics, x1: number, x2: number, y: number) {
+        g.lineStyle(8, Theme.systemTime, 0.12);
+        g.lineBetween(x1, y, x2, y);
         g.lineStyle(2, Theme.systemTime, 1);
         g.lineBetween(x1, y, x2, y);
     }
