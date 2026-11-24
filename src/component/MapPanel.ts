@@ -34,27 +34,25 @@ export class MapPanel extends Phaser.GameObjects.Container {
     panning = false;
     panStart = { x: 0, y: 0, scrollX: 0, scrollY: 0 };
 
-    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, state: GameState,
-        onSwap: () => void) {
+    constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, state: GameState) {
         super(scene, x, y);
         this.gs = state;
         this.w = w;
         this.h = h;
-        this.create(onSwap);
+        this.create();
     }
 
-    create(onSwap: () => void) {
+    create() {
         this.frame = this.scene.add.graphics();
         Glass.panel(this.frame, 0, 0, this.w, this.h);
         const title = Theme.glowText(this.scene.add.text(16, 12, 'MAP', Theme.titleStyle(22)));
         this.subtitle = this.scene.add.text(16, 42, '', Theme.style(15, Theme.textDim));
-        const zoomIn = new Button(this.scene, this.w - 300, 12, 40, 40, '+', () => this.zoom(0.15), 24);
-        const zoomOut = new Button(this.scene, this.w - 252, 12, 40, 40, '−', () => this.zoom(-0.15), 24);
-        const swap = new Button(this.scene, this.w - 200, 12, 186, 40, '⇄ ALL ROOMS', onSwap, 18);
+        const zoomIn = new Button(this.scene, this.w - 104, 12, 40, 40, '+', () => this.zoom(0.15), 24);
+        const zoomOut = new Button(this.scene, this.w - 56, 12, 40, 40, '−', () => this.zoom(-0.15), 24);
         const hint = this.scene.add.text(16, this.h - 30,
             'dot = room in viewer 1 / 2 · drag to pan · +/− to zoom · left click: viewer 1 · right click: viewer 2',
             Theme.style(14, Theme.textDim));
-        this.add([this.frame, title, this.subtitle, zoomIn, zoomOut, swap, hint]);
+        this.add([this.frame, title, this.subtitle, zoomIn, zoomOut, hint]);
         this.scene.add.existing(this);
 
         this.createMap();
@@ -85,9 +83,7 @@ export class MapPanel extends Phaser.GameObjects.Container {
         this.gs.on("timeChanged", () => this.refresh());
         this.gs.on("namesChanged", () => this.refresh());
         this.gs.on("viewerChanged", () => this.refresh());
-        this.gs.on("panelChanged", () => this.updateVisible());
         this.refresh();
-        this.updateVisible();
     }
 
     createMap() {
@@ -135,13 +131,6 @@ export class MapPanel extends Phaser.GameObjects.Container {
 
     zoom(delta: number) {
         this.cam.setZoom(Phaser.Math.Clamp(this.cam.zoom + delta, 0.55, 1.6));
-    }
-
-    updateVisible() {
-        const shown = this.gs.leftPanel === 'map';
-        this.setVisible(shown);
-        this.cam.setVisible(shown);
-        this.cam.inputEnabled = shown;
     }
 
     refresh() {

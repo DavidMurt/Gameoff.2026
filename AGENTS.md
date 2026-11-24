@@ -44,7 +44,7 @@ New scenes go in `src/scenes/`, new reusable game objects in `src/component/`.
 
 `docs/gui-mockup.webp` is the layout reference for the main game screen (1920×1080):
 
-- **Left column:** map panel on top ("Map Goes Here"); below it a tabbed panel with **Users**, **Rooms** and **Symbols** tabs.
+- **Left column:** map panel on top ("Map Goes Here"); below it a tabbed panel. The mockup shows **Users**, **Rooms** and **Symbols** tabs; in the game the tabs are **Users**, **Rooms** and **Logs** (Symbols was dropped). The Logs tab holds the room/timeline panel (`RoomTimelinePanel`: the unplaced column and one timeline per audio room, where logs are dragged), so the map is always visible.
 - **Two log panels** side by side in the middle. Each has a header with the log ID (e.g. "Log ID #1"), a room dropdown (e.g. "Room ID 435 (Entryway)"), and **lock room** / **lock time** toggle buttons; the log content fills the area below.
 - **Right side:** vertical timeline columns, one per room, each headed by its room ID (e.g. "Room 1111", "Room 5555") and running top to bottom from about 12AM to 7AM. Coloured blocks show when each log was recorded in that room (e.g. Log 1 and Log 3 in red, Log 2 in blue). The mockup shows two variants side by side, separated by a narrow blank column: a compact one with only the rooms that have logs (1111, 5555), and a full one with every room (1111, 2222, 3333, 4444, 5555), where rooms with no logs are empty.
 
