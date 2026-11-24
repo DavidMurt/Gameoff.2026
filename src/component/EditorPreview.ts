@@ -1,6 +1,7 @@
 import { LogEntry } from "../data/Types";
 import { Clock } from "../state/Clock";
 import { EditorState } from "../state/EditorState";
+import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 
 // Log editor: the two open logs' entries side by side, lined up by clock time, so you can check
@@ -25,10 +26,7 @@ export class EditorPreview extends Phaser.GameObjects.Container {
 
     create() {
         const bg = this.scene.add.graphics();
-        bg.fillStyle(Theme.panel, 1);
-        bg.fillRect(0, 0, this.w, this.h);
-        bg.lineStyle(2, Theme.border, 1);
-        bg.strokeRect(0, 0, this.w, this.h);
+        Glass.panel(bg, 0, 0, this.w, this.h);
         this.content = this.scene.add.container(0, 0);
         this.add([bg, this.content]);
 

@@ -52,7 +52,10 @@ New scenes go in `src/scenes/`, new reusable game objects in `src/component/`.
 
 - Native resolution is **1920×1080** (HD), scaled with `Scale.FIT` and centered. `pixelArt` is off, so text and lines render smoothly. Design all layout at that resolution and position things relative to `this.cameras.main.width / height`, not hard-coded screen pixels.
 - Graphics are deliberately simple: flat panels, lines, boxes and text (mostly `Phaser.GameObjects.Graphics`, rectangles and text objects). Keep text large enough to stay readable when the game is scaled down to smaller windows.
-- Background colour is `#2f2f2f`; UI uses white (`0xffffff`).
+- The look is a futuristic "glass HUD": translucent dark-blue panels with cut corners and glowing cyan edges over a desktop wallpaper (night sky, planet, grid floor). All colours and text styles live in `component/Theme.ts`; take colours from there rather than hard-coding them.
+  - Draw panel frames with `Glass.panel(g, x, y, w, h)` and glowing outlines with `Glass.glowRect(...)` (`component/Glass.ts`). Use `Theme.panelAlpha`-style alpha fills, not opaque ones, so the wallpaper shows through.
+  - Full-screen scenes add `new Wallpaper(this)` first in `create()` (`component/Wallpaper.ts`). The game background colour is `#040814`.
+  - Titles get a neon glow with `Theme.glowText(text)`.
 - Scene flow: `Boot` → `PreloadScene` → `MenuScene` → `GameScene` (investigation) → `EndScene`. Shared progress lives in a `GameState` stored in `this.registry` under `'state'`.
   - `Boot` (in `main.ts`) loads only what the preloader itself needs (`DG` logo, `pixel` bitmap font), then registers the other scenes with `this.scene.add(key, Class)` and starts `PreloadScene`.
   - `PreloadScene` shows the logo/loading bar, queues all game assets in `preload()`, and starts `MenuScene` from the loader's `complete` event.

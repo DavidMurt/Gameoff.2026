@@ -1,34 +1,44 @@
-// Shared colours, fonts and text styles for the emergency console GUI.
+// Shared colours, fonts and text styles for the emergency console GUI ("glass HUD" look).
 export class Theme {
     static readonly font = 'Consolas, "Courier New", monospace';
 
-    static readonly background = 0x2f2f2f;
-    static readonly panel = 0x1a1a1a;
-    static readonly panelLight = 0x262626;
-    static readonly border = 0xd8d8d8;
-    static readonly borderDim = 0x555555;
-    static readonly grid = 0x3c3c3c;
-    static readonly gridHour = 0x666666;
+    static readonly background = 0x040814;
+    static readonly backgroundCss = '#040814';
+    static readonly panel = 0x0a1830;
+    static readonly panelAlpha = 0.6;
+    static readonly panelLight = 0x14305a;
+    static readonly border = 0x6ee7ff;
+    static readonly borderBright = 0xc8f8ff;
+    static readonly borderDim = 0x2f6684;
+    static readonly grid = 0x173550;
+    static readonly gridHour = 0x2f6684;
     static readonly white = 0xffffff;
 
-    static readonly viewerColors = [0xd84848, 0x4a7ae8];
-    static readonly systemTime = 0xf0b020;
-    static readonly highlight = 0x4a3f18;
-    static readonly complete = 0x48c068;
-    static readonly incorrect = 0xe05050;
-    static readonly checking = 0xf0b020;
-    static readonly block = 0xb0b0b0;
+    static readonly viewerColors = [0xff4fa3, 0x6ee7ff];
+    static readonly systemTime = 0xffd166;
+    static readonly highlight = 0x6a5416;
+    static readonly complete = 0x4dffa0;
+    static readonly incorrect = 0xff5a6a;
+    static readonly checking = 0xffd166;
+    static readonly block = 0x8fb6cc;
 
-    static readonly text = '#e8e8e8';
-    static readonly textDim = '#8a8a8a';
-    static readonly textSound = '#c8a860';
-    static readonly textAmber = '#f0b020';
-    static readonly textGreen = '#48c068';
-    static readonly textRed = '#e05050';
-    static readonly textDark = '#1a1a1a';
+    static readonly text = '#dff6ff';
+    static readonly textDim = '#7fb3cc';
+    static readonly textSound = '#e8c070';
+    static readonly textAmber = '#ffd166';
+    static readonly textGreen = '#4dffa0';
+    static readonly textRed = '#ff6b7a';
+    static readonly textDark = '#040814';
+    static readonly glow = '#6ee7ff';
 
     static style(size: number, color: string = Theme.text): Phaser.Types.GameObjects.Text.TextStyle {
         return { fontFamily: Theme.font, fontSize: size + 'px', color };
+    }
+
+    // A soft neon glow for titles.
+    static glowText<T extends Phaser.GameObjects.Text>(text: T, color: string = Theme.glow, blur = 12): T {
+        text.setShadow(0, 0, color, blur, false, true);
+        return text;
     }
 
     static statusColor(status: string): string {

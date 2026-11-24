@@ -1,3 +1,4 @@
+import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 
 // A flat console button. "active" draws it filled (e.g. a set lock), "enabled" greys it out.
@@ -63,11 +64,20 @@ export class Button extends Phaser.GameObjects.Container {
 
     redraw() {
         this.bg.clear();
-        const fill = this.toggled ? Theme.border : (this.hovered && this.enabled ? 0x3a3a3a : Theme.panel);
-        this.bg.fillStyle(fill, 1);
+        if (this.toggled) {
+            this.bg.fillStyle(Theme.border, this.enabled ? 0.85 : 0.35);
+        } else if (this.hovered && this.enabled) {
+            this.bg.fillStyle(Theme.border, 0.2);
+        } else {
+            this.bg.fillStyle(Theme.panel, 0.5);
+        }
         this.bg.fillRect(0, 0, this.w, this.h);
-        this.bg.lineStyle(2, this.enabled ? Theme.border : Theme.borderDim, 1);
-        this.bg.strokeRect(0, 0, this.w, this.h);
-        this.label.setColor(!this.enabled ? '#555555' : (this.toggled ? Theme.textDark : Theme.text));
+        if (this.enabled) {
+            Glass.glowRect(this.bg, 0, 0, this.w, this.h, Theme.border, 1.5, this.hovered || this.toggled ? 1 : 0.6);
+        } else {
+            this.bg.lineStyle(1, Theme.borderDim, 0.8);
+            this.bg.strokeRect(0, 0, this.w, this.h);
+        }
+        this.label.setColor(this.toggled ? Theme.textDark : (this.enabled ? Theme.text : '#3f6a80'));
     }
 }

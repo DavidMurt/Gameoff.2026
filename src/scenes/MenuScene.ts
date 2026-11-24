@@ -1,5 +1,7 @@
 import { Button } from "../component/Button";
+import { Glass } from "../component/Glass";
 import { Theme } from "../component/Theme";
+import { Wallpaper } from "../component/Wallpaper";
 import { GameState } from "../state/GameState";
 
 // Main menu: new investigation, continue, settings. A new game shows the shift handover briefing first.
@@ -16,10 +18,10 @@ export class MenuScene extends Phaser.Scene {
         const cx = this.cameras.main.width / 2;
         const cy = this.cameras.main.height / 2;
 
+        new Wallpaper(this);
         const g = this.add.graphics();
-        g.lineStyle(3, Theme.border, 1);
-        g.strokeRect(cx - 420, cy - 330, 840, 660);
-        this.add.text(cx, cy - 250, 'NIGHT SHIFT', Theme.style(84)).setOrigin(0.5);
+        Glass.panel(g, cx - 420, cy - 330, 840, 660, 0.65, 28);
+        Theme.glowText(this.add.text(cx, cy - 250, 'NIGHT SHIFT', Theme.style(84)).setOrigin(0.5), Theme.glow, 24);
         this.add.text(cx, cy - 175, 'BASTION Recovery Mode · emergency console', Theme.style(22, Theme.textDim)).setOrigin(0.5);
         this.add.text(cx, cy - 135, 'MAIN SECURITY SUITE OFFLINE · VIDEO ARCHIVE OFFLINE', Theme.style(18, Theme.textRed)).setOrigin(0.5);
 
@@ -54,12 +56,9 @@ export class MenuScene extends Phaser.Scene {
         const overlay = this.add.container(0, 0).setDepth(100);
         const blocker = this.add.zone(0, 0, this.cameras.main.width, this.cameras.main.height).setOrigin(0).setInteractive();
         const g = this.add.graphics();
-        g.fillStyle(0x000000, 0.7);
+        g.fillStyle(Theme.background, 0.7);
         g.fillRect(0, 0, this.cameras.main.width, this.cameras.main.height);
-        g.fillStyle(Theme.panel, 1);
-        g.fillRect(cx - w / 2, cy - h / 2, w, h);
-        g.lineStyle(3, Theme.border, 1);
-        g.strokeRect(cx - w / 2, cy - h / 2, w, h);
+        Glass.panel(g, cx - w / 2, cy - h / 2, w, h, 0.85, 28);
         overlay.add([blocker, g]);
         this.overlay = overlay;
         return overlay;

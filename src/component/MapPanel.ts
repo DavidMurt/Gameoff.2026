@@ -3,6 +3,7 @@ import { Room } from "../data/Types";
 import { Clock } from "../state/Clock";
 import { GameState } from "../state/GameState";
 import { Button } from "./Button";
+import { Glass } from "./Glass";
 import { Theme } from "./Theme";
 
 interface RoomView {
@@ -44,11 +45,8 @@ export class MapPanel extends Phaser.GameObjects.Container {
 
     create(onSwap: () => void) {
         this.frame = this.scene.add.graphics();
-        this.frame.fillStyle(Theme.panel, 1);
-        this.frame.fillRect(0, 0, this.w, this.h);
-        this.frame.lineStyle(3, Theme.border, 1);
-        this.frame.strokeRect(0, 0, this.w, this.h);
-        const title = this.scene.add.text(16, 12, 'MAP', Theme.style(26));
+        Glass.panel(this.frame, 0, 0, this.w, this.h);
+        const title = Theme.glowText(this.scene.add.text(16, 12, 'MAP', Theme.style(26)));
         this.subtitle = this.scene.add.text(16, 42, '', Theme.style(15, Theme.textDim));
         const zoomIn = new Button(this.scene, this.w - 300, 12, 40, 40, '+', () => this.zoom(0.15), 24);
         const zoomOut = new Button(this.scene, this.w - 252, 12, 40, 40, '−', () => this.zoom(-0.15), 24);
@@ -70,7 +68,6 @@ export class MapPanel extends Phaser.GameObjects.Container {
         const mapW = (cols - 1) * MapPanel.strideX + MapPanel.cellW;
         const mapH = (rows - 1) * MapPanel.strideY + MapPanel.cellH;
         this.cam = this.scene.cameras.add(vx, vy, vw, vh);
-        this.cam.setBackgroundColor(Theme.panel);
         this.cam.setBounds(MapPanel.worldX - 40, MapPanel.worldY - 40, mapW + 80, mapH + 80);
         this.cam.setScroll(MapPanel.worldX - 40, MapPanel.worldY - 40);
 
@@ -159,25 +156,27 @@ export class MapPanel extends Phaser.GameObjects.Container {
                 y: MapPanel.worldY + r.row * MapPanel.strideY + MapPanel.cellH / 2
             };
         };
-        g.lineStyle(6, Theme.borderDim, 1);
-        SampleData.corridors.forEach(([a, b]) => {
-            const p = center(a);
-            const q = center(b);
-            g.lineBetween(p.x, p.y, q.x, q.y);
+        // Corridors: a faint wide glow under a thin line.
+        [[10, 0.06], [3, 0.45]].forEach(([width, alpha]) => {
+            g.lineStyle(width, Theme.border, alpha);
+            SampleData.corridors.forEach(([a, b]) => {
+                const p = center(a);
+                const q = center(b);
+                g.lineBetween(p.x, p.y, q.x, q.y);
+            });
         });
 
         this.roomViews.forEach((view) => {
             const room = view.room;
             const rx = MapPanel.worldX + room.col * MapPanel.strideX;
             const ry = MapPanel.worldY + room.row * MapPanel.strideY;
-            g.fillStyle(Theme.panelLight, 1);
+            g.fillStyle(Theme.panelLight, 0.55);
             g.fillRect(rx, ry, MapPanel.cellW, MapPanel.cellH);
-            g.lineStyle(2, Theme.border, 1);
-            g.strokeRect(rx, ry, MapPanel.cellW, MapPanel.cellH);
+            Glass.glowRect(g, rx, ry, MapPanel.cellW, MapPanel.cellH, Theme.border, 1.5, 0.55);
             [0, 1].forEach((i) => {
                 if (this.gs.viewerRoom(i) === room.id) {
-                    g.lineStyle(4, Theme.viewerColors[i], 1);
-                    g.strokeRect(rx + 2 + i * 4, ry + 2 + i * 4, MapPanel.cellW - 4 - i * 8, MapPanel.cellH - 4 - i * 8);
+                    Glass.glowRect(g, rx + 2 + i * 4, ry + 2 + i * 4, MapPanel.cellW - 4 - i * 8, MapPanel.cellH - 4 - i * 8,
+                        Theme.viewerColors[i], 3, 1);
                     g.fillStyle(Theme.viewerColors[i], 1);
                     g.fillCircle(rx + MapPanel.cellW - 18 - i * 22, ry + 18, 8);
                 }
