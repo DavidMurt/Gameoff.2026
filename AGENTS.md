@@ -96,22 +96,50 @@ Follow the style already in the codebase:
 
 ## Git workflow
 
-Each agent works on its own branch and finishes with a pull request. Never commit directly to `main`.
+Several agents can work at the same time, each in its own **git worktree** on its own branch, and each finishes with a pull request. A worktree is a separate folder with its own checkout that shares the same repository, so agents never switch branches under each other or mix up uncommitted changes. Never commit directly to `main`.
 
-1. **Branch:** start from an up-to-date `main` and create a new branch for the task:
+### Folders
+
+- `Gameoff.2026/` is the main checkout. It belongs to the human: don't switch its branch, edit its files or commit in it.
+- `Gameoff.2026-worktrees/<branch-name>/` (a sibling folder, outside the repo) holds one worktree per agent task. Keeping worktrees outside the repo stops Vite, `tsc` and the file watcher from picking up another agent's files.
+- If your harness already started you in a fresh worktree on a new branch (for example a Claude Code worktree session), use that one instead of making another.
+
+### Steps
+
+1. **Pick an area:** each task should own a clear area of the code (a scene, a component, the log editor, story data). Before starting, check open PRs and existing branches (`gh pr list`, `git worktree list`) so you don't take the same files as another agent. Some files are shared hot spots: `src/main.ts` (scene registration), `src/component/Theme.ts`, `src/state/GameState.ts`, `src/data/*.json`, `vite.config.ts` and this file. Keep edits there small and focused so they merge cleanly.
+2. **Create the worktree and branch** from the latest `main`, from inside the main checkout:
    ```bash
-   git switch main
-   git pull
-   git switch -c <short-kebab-case-name>   # e.g. data-overlap-checker
+   git fetch origin
+   git worktree add ../Gameoff.2026-worktrees/<branch-name> -b <branch-name> origin/main --no-track
+   cd ../Gameoff.2026-worktrees/<branch-name>
+   yarn install
    ```
-   One branch per task. Don't reuse another agent's branch or work on top of someone else's uncommitted changes. If the working tree is dirty when you start, stop and ask instead of stashing, discarding or committing those changes.
-2. **Work:** make the changes on that branch only. Before committing, run `npx tsc --noEmit`, plus `yarn build` for larger changes.
-3. **Commit:** stage only the files you changed (`git add <paths>`, not `git add -A`). Write a short, imperative, sentence-case commit message, e.g. `Add data checker for overlapping logs per room`. Split unrelated changes into separate commits.
-4. **Push and open a PR:** the remote is `origin` (`DavidMurt/Gameoff.2026`) and PRs target `main`:
+   Use a short kebab-case branch name (e.g. `data-overlap-checker`) and the same name for the folder. One worktree and one branch per task. Don't reuse another agent's branch or worktree.
+3. **Work only inside your worktree.** Use its paths for every read, edit and command. To run the game, give each worktree its own port so dev servers don't collide (the default 5500 is the human's):
+   ```bash
+   yarn dev --port 5511 --strictPort --open false   # pick a free port per worktree
+   ```
+   The log editor (`?editor`) saves into the `src/data/*.json` of the worktree whose server is running, so story-data edits land on your branch.
+4. **Verify:** run `npx tsc --noEmit` before committing, plus `yarn build` for larger changes.
+5. **Commit:** stage only the files you changed (`git add <paths>`, not `git add -A`). Write a short, imperative, sentence-case commit message, e.g. `Add data checker for overlapping logs per room`. Split unrelated changes into separate commits.
+6. **Stay up to date:** if `main` moved while you worked, merge it into your branch and fix any conflicts before opening the PR:
+   ```bash
+   git fetch origin
+   git merge origin/main
+   ```
+   Prefer merging over rebasing so you never need to force-push.
+7. **Push and open a PR:** the remote is `origin` (`DavidMurt/Gameoff.2026`) and PRs target `main`:
    ```bash
    git push -u origin <branch-name>
    gh pr create --base main --title "<summary>" --body "<what changed and how it was tested>"
    ```
    The PR description should say what changed, why, and how it was verified (type-check, build, manual run in `yarn dev`).
-5. **Don't merge:** leave review and merging to a human. Don't force-push to `main` or delete other branches.
-6. **Keep `AGENTS.md` current:** if your change adds folders, scenes or conventions, update this file in the same PR.
+8. **Don't merge:** leave review and merging to a human. Don't force-push to `main` or delete other agents' branches or worktrees.
+9. **Clean up** once your PR is merged (run from the main checkout):
+   ```bash
+   git worktree remove ../Gameoff.2026-worktrees/<branch-name>
+   git branch -d <branch-name>
+   git worktree prune
+   ```
+   Stop any dev server running from the worktree first, or Windows may refuse to delete the folder.
+10. **Keep `AGENTS.md` current:** if your change adds folders, scenes or conventions, update this file in the same PR.
